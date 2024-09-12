@@ -1,0 +1,13 @@
+name: SimApp
+title: SimApp
+username: linusgun
+account: linusgun
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12438293
+bundleId: 9084347
+url: https://linusgun.shinyapps.io/SimApp/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: r/transition_prob_funs_0F508.R|r/transition_prob_funs_F508.R|server_.R|ui_.R

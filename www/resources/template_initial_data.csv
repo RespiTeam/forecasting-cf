@@ -1,0 +1,8 @@
+ID,birthDate,genotype,initState
+1,1951-08-01,cftr,moderate
+2,1954-10-01,cftr,mild
+3,1955-04-01,cftr,transplant
+4,1958-07-01,cftr,moderate
+1,2019-05-01,non_cftr,mild
+2,2019-03-01,non_cftr,mild
+3,2019-08-01,non_cftr,mild

@@ -1,0 +1,29 @@
+/* www/custom.css */
+
+h5 {
+    color: red; 
+}
+
+.custom-info {
+  background-color: #f0f8ff;
+  border: 2px solid #000080;
+  color: #000080;
+  font-size: 10px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.custom-title {
+  background-color: #e6f2ff;
+  border: 2px solid #00509e;
+  color: #00509e;
+  font-size: 18px;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+.respi-footer {
+  color: #808080;
+  font-size: 10px;
+  text-align: center;
+}
