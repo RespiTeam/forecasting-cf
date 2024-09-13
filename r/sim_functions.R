@@ -27,100 +27,20 @@ build_immigr_pop<- function(start_date=as.Date("2020-01-01"), end_date=as.Date("
   )
   
   # ages 0-1
-  n=as.integer(inmigr_probs %>% filter(age_range=='0-1') %>% select(n))
-  M=n*n_years
-  
-  if (n>0) {
-  
-    immigrDatesRange <- as.numeric(c(start_date, end_date))
+  immigrPop0 <- immigrAgeGroupGeneration(Id=1, inmigr_probs, 0,1, n_years) 
     
-    immigrDates <- as.character(chron(immigrDatesRange[1] + runif(M, min=0 , max = diff(immigrDatesRange)),
-                                      out.format = c(dates = "d/m/year", times = "h:m:s")))
-    immigrDates <- as.Date(immigrDates, format("(%d/%b/%Y"))
-    
-    immigrAges <- round(runif(M, min = 0, max = 1) * 365, 0)
-    immigrBirthDates <- immigrDates - lubridate::days(immigrAges)
-    immigrPop0 <- data.frame(ID = 1, immigrDate = immigrDates, birthDate=immigrBirthDates, 
-                             immigrInitState = "mild")
-    
-  }
-  
-  # ages 1-2 
-  n=as.integer(inmigr_probs %>% filter(age_range=='1-2') %>% select(n))
-  M=n*n_years
-  immigrPop1<- data.frame()
-  
-  if (n>0) {
-  
-    # generating M random dates in the interval
-    immigrDatesRange <- as.numeric(c(start_date, end_date))
-    immigrDates <- as.character(chron(immigrDatesRange[1] + runif(M, min=0 , max = diff(immigrDatesRange)),
-                                      out.format = c(dates = "d/m/year", times = "h:m:s")))
-    immigrDates <- as.Date(immigrDates, format("(%d/%b/%Y"))
-    
-    # generating M ages (in days) between 1 and 2 years old
-    immigrAges <- round(runif(M, min = 1, max = 2) * 365, 0)
-    immigrBirthDates <- immigrDates - lubridate::days(immigrAges)
-    
-    immigrPop1 <- data.frame(ID = 2, immigrDate = immigrDates, birthDate=immigrBirthDates, 
-                             immigrInitState = "mild")
-  
-  }
+  # ages 1-2
+  immigrPop1 <- immigrAgeGroupGeneration(Id=2, inmigr_probs, 1,2, n_years) 
   
   # ages 2-18
-  n=as.integer(inmigr_probs %>% filter(age_range=='2-18') %>% select(n))
-  M=n*n_years
-  
-  immigrPop2<- data.frame()
-  if (n>0) {
-    
-    immigrDatesRange <- as.numeric(c(start_date, end_date))
-    immigrDates <- as.character(chron(immigrDatesRange[1] + runif(M, min=0 , max = diff(immigrDatesRange)),
-                                      out.format = c(dates = "d/m/year", times = "h:m:s")))
-    immigrDates <- as.Date(immigrDates, format("(%d/%b/%Y"))
-    immigrAges <- round(runif(M, min = 2, max = 18) * 365, 0)
-    immigrBirthDates <- immigrDates - lubridate::days(immigrAges)
-    immigrPop2 <- data.frame(ID = 3, immigrDate = immigrDates, birthDate=immigrBirthDates, 
-                             immigrInitState = "mild")
-  
-  }
+  immigrPop2 <- immigrAgeGroupGeneration(Id=3, inmigr_probs, 2,18, n_years) 
   
   # ages 18-40
-  n=as.integer(inmigr_probs %>% filter(age_range=='18-40') %>% select(n))
-  M=n*n_years
-  immigrPop3<- data.frame()
-  
-  if (n>0) { 
-    immigrDatesRange <- as.numeric(c(start_date, end_date))
-    immigrDates <- as.character(chron(immigrDatesRange[1] + runif(M, min=0 , max = diff(immigrDatesRange)),
-                                      out.format = c(dates = "d/m/year", times = "h:m:s")))
-    immigrDates <- as.Date(immigrDates, format("(%d/%b/%Y"))
-    immigrAges <- round(runif(M, min = 18, max = 40) * 365, 0)
-    immigrBirthDates <- immigrDates - lubridate::days(immigrAges)
-    immigrPop3 <- data.frame(ID = 4, immigrDate = immigrDates, birthDate=immigrBirthDates, 
-                             immigrInitState = "mild")
-  
-  }
+  immigrPop3 <- immigrAgeGroupGeneration(Id=4, inmigr_probs, 18,40, n_years)
     
   # joining the migration groups in one dataframe
   #immigrPop <- rbind(immigrPop0, immigrPop1, immigrPop2, immigrPop3)
   immigrPop <- bind_rows(immigrPop0, immigrPop1, immigrPop2, immigrPop3)
-  
-  # print("0")
-  # print(immigrPop0)
-  # print(str(immigrPop0))
-  # print("1")
-  # print(immigrPop1)
-  # print(str(immigrPop1))
-  # print("2")
-  # print(immigrPop2)
-  # print(str(immigrPop2))
-  # print("3")
-  # print(immigrPop3)
-  # print(str(immigrPop3))
-  # print("Total")
-  # print(head(immigrPop))
-  # print(str(immigrPop))
   
   if (dim(immigrPop)[1]>0) {
     
@@ -136,8 +56,6 @@ build_immigr_pop<- function(start_date=as.Date("2020-01-01"), end_date=as.Date("
     
   }
   
-  
-    
   return(immigrPop)
   
 }
@@ -189,9 +107,7 @@ cf_simulation <- function(start_date=as.Date("2020-01-01"), end_date=as.Date("20
                             "severe->mild", "severe->transplant"), 
                           c(R[5],R[8], R[1], R[4], R[2], R[7], R[10]))
   
-  
   #absStates: Absorving States
-  #,paste("mild_to_dead",group,sep="_")
   absTransitions <- rbind(c("mild/dead", R[3]), 
                           c("moderate/dead",R[6]), 
                           c("severe/dead",R[9]), 
@@ -202,8 +118,6 @@ cf_simulation <- function(start_date=as.Date("2020-01-01"), end_date=as.Date("20
                                             absTransitions = absTransitions, 
                                             stateSpace = stateSpace)
   
-  # print(paste("Transition matrix of ",group,sep=""))
-  # print(transitionMatrix)
   # Simulations
   micsimCFpop <- micSim(initPop = initPop, transitionMatrix = transitionMatrix, absStates = absStates, 
                         maxAge = maxAge, simHorizon = simHorizon, immigrPop = immigrPop, transitionFuns=transitionFuns)
@@ -211,7 +125,6 @@ cf_simulation <- function(start_date=as.Date("2020-01-01"), end_date=as.Date("20
   return(micsimCFpop)
   
 }
-
 
 # Function to convert to longitudinal data #
 Join_into_Longi = function(initPop,micsimCFpop,immigrPop,start_date) {
@@ -260,50 +173,6 @@ Join_into_Longi = function(initPop,micsimCFpop,immigrPop,start_date) {
 }
 
 
-make_donnut<- function(data,field,categories_name) {
-  
-  data=as.data.frame(data)
-  
-  freq_data=as.data.frame(table(data[,field], exclude = NULL))
-  
-  freq_data= freq_data %>%filter (Freq>0)
-  
-  # Compute percentages
-  freq_data$fraction = freq_data$Freq / sum(freq_data$Freq)
-  
-  # Compute the cumulative percentages (top of each rectangle)
-  freq_data$ymax = cumsum(freq_data$fraction)
-  
-  # Compute the bottom of each rectangle
-  freq_data$ymin <- c(0, head(freq_data$ymax, n=-1))
-  
-  # Compute label position
-  freq_data$labelPosition <- (freq_data$ymax + freq_data$ymin) / 2
-  
-  # Compute a good label
-  freq_data$label <- paste0(format(freq_data$Freq, digits=2),'; ',format(freq_data$fraction*100, digits=2), "%")
-  
-  # Make the plot
-  return(
-    ggplot(freq_data, aes(
-    ymax = ymax,
-    ymin = ymin,
-    xmax = 4,
-    xmin = 3,
-    fill = Var1
-  )) +
-    geom_rect() +
-    geom_text(x = 3.5,
-              aes(y = labelPosition, label = label),
-              size = 4) +
-    coord_polar(theta = "y") +
-    xlim(c(2, 4)) +
-    theme_void() +
-    labs(fill=categories_name)
-  )
-  
-}
-
 # Function to merge inital Data with longitudinal data #
 # It keeps only the last record per patient in the longitudinal data #
 mergingSimData<-function(initData,pop_long) {
@@ -324,8 +193,6 @@ mergingSimData<-function(initData,pop_long) {
         ),
       by=join_by(ID)
     )
-  
-  #names(initData)[names(initData)=='new_state']=paste('State',year(end_date),sep="")
   
   return(initData)
   
@@ -377,44 +244,7 @@ mergingSimData2<-function(initData,pop_long, period_length, start_date, end_date
       by=join_by(ID)
     )
   
-  #names(initData)[names(initData)=='new_state']=paste('State',year(end_date),sep="")
-  
   return(initData)
-  
-}
-
-
-
-formattingForSankey<-function(transits,labelStates) {
-  
-  sankeyList=NULL
-  
-  from_year=labelStates[1]
-  to_year=labelStates[2]
-  
-  nodes_sankey=c(
-    paste(transits$initState,from_year,sep="-"),
-    paste(names(transits)[2:length(names(transits))],to_year,sep="-")
-  )
-  
-  sankeyList$nodes=as.data.frame(tibble(name=nodes_sankey))
-  
-  links_sankey=tibble(source=c(),target=c(),value=c())
-  
-  nrows=length(transits$initState)
-  ncols=length(names(transits))-1
-  for (i in 1:nrows)
-    for (j in 1:ncols) {
-      links_sankey[(i-1)*ncols+j,'source']=i-1
-      links_sankey[(i-1)*ncols+j,'target']=j+nrows-1
-      links_sankey[(i-1)*ncols+j,'value']=transits[i,j+1]
-    }
-  
-  links_sankey = links_sankey %>% filter(value>0)
-  
-  sankeyList$links=as.data.frame(links_sankey)
-  
-  return(sankeyList)
   
 }
 
@@ -465,215 +295,8 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     lastID=max(initPop_cftr$ID)
     inmigrPop_cftr=build_immigr_pop(start_date, end_date, new_cftr,lastID, inmigr_probs)
     
-    
-    ### DEFINING TRANSITION PROBABILITIES ### 
-    
-    invlogit <- function(x) exp(x)/(1 + exp(x))
-    transFuns <- list()
-    
-    # _0cftr GROUP
-    
-    # R01: Mild to moderate
-    transFuns$mild_to_moderate_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -3.404598 #-3.417143
-      b <- 0.0322104 #0.038112
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R02: Mild to severe
-    transFuns$mild_to_severe_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -5.771441 #-10.828
-      b <- 0 #0.089
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R03: Mild to dead
-    transFuns$mild_to_dead_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -6.26, -1000) #ifelse(age > 16, -8.88787, -100)
-      b <- 0 #ifelse(age > 16, 0.07179 , -100)
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R04: Moderate to mild
-    transFuns$moderate_to_mild_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -0.7943486 #-0.30295
-      b <- -0.0419111 #-0.05760
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R05: Moderate to severe
-    transFuns$moderate_to_severe_0cftr <- function(age, calTime, duration){	
-      #Coefficients from EDA notebook
-      a <- -2.358466 #-2.602126
-      b <- 0 #0.011626
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R06: Moderate to dead
-    transFuns$moderate_to_dead_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -4.477337, -1000)  #ifelse(age > 16, -5.60136, -100) 
-      b <- 0 #ifelse(age > 16, 0.02164, -100)
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R07: Severe to mild
-    transFuns$severe_to_mild_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -6.51323  #-2.3653
-      b <- 0 #-0.1099
-      rate <- invlogit(a + (b*age))	
-      return(rate)
-    }
-    
-    # R08: Severe to moderate
-    transFuns$severe_to_moderate_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -2.509121 #-0.60430
-      b <- 0 #-0.04273
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R09: Severe to dead
-    transFuns$severe_to_dead_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -2.766158, -1000) #ifelse(age > 16, -3.087618, -100)				
-      b <- 0 #ifelse(age > 16,  0.008507 , -100)
-      rate <- invlogit(a + (b*age))					
-      return(rate)					
-    }
-    
-    # R10: Severe to transplant
-    transFuns$severe_to_transplant_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook  
-      a <- ifelse(age > 16, -2, -1000) #ifelse(age > 16, -0.81900, -100)
-      b <- 0 #ifelse(age > 16, -0.03228, -100)
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # R11: Transplant to dead
-    transFuns$transplant_to_dead_0cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -3.218876, -1000)	 #ifelse(age > 16, -6.08533, -100)	
-      b <- 0 #ifelse(age > 16, 0.06924, -100)
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
-    
-    # _cftr GROUP
-    
-    # R01: Mild to moderate
-    transFuns$mild_to_moderate_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -3.870427  #-3.417143
-      b <- 0.0130938 #0.038112
-      rate <- invlogit(a + (b*age))*eR_vector[1]
-      return(rate)
-    }
-    
-    # R02: Mild to severe
-    transFuns$mild_to_severe_cftr <- function(age, calTime, duration){
-      # Coefficients from EDA notebook
-      # a <- -10.828
-      # b <- 0.089
-      # rate <- invlogit(a + (b*age))*eR_vector[2]
-      # return(rate)
-      return(0)
-    }
-    
-    # R03: Mild to dead
-    transFuns$mild_to_dead_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -6.26, -1000)  #ifelse(age > 16, -8.88787, -100)
-      b <- 0 #ifelse(age > 16, 0.07179 , -100)
-      rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[3],1)
-      return(rate)
-    }
-    
-    # R04: Moderate to mild
-    transFuns$moderate_to_mild_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -1.323925 #-0.30295
-      b <- -0.0409952 #-0.05760
-      rate <- invlogit(a + (b*age))*eR_vector[4]
-      return(rate)
-    }
-    
-    # R05: Moderate to severe
-    transFuns$moderate_to_severe_cftr <- function(age, calTime, duration){	
-      #Coefficients from EDA notebook
-      a <- -2.259841 #-2.602126
-      b <- -0.0345258 # 0.011626
-      rate <- invlogit(a + (b*age))*eR_vector[5]
-      return(rate)
-    }
-    
-    # R06: Moderate to dead
-    transFuns$moderate_to_dead_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -4.477337, -1000) # ifelse(age > 16, -5.60136, -100) 
-      b <- 0 #ifelse(age > 16, 0.02164, -100)
-      rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[6],1)
-      return(rate)
-    }
-    
-    # R07: Severe to mild
-    transFuns$severe_to_mild_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      # a <- -2.3653
-      # b <- -0.1099
-      # rate <- invlogit(a + (b*age))*eR_vector[7]
-      # return(rate)
-      return(0)
-    }
-    
-    # R08: Severe to moderate
-    transFuns$severe_to_moderate_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- -2.599317 #-0.60430
-      b <- 0  #-0.04273
-      rate <- invlogit(a + (b*age))*eR_vector[8]
-      return(rate)
-    }
-    
-    # R09: Severe to dead
-    transFuns$severe_to_dead_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -2.766158, -1000) #ifelse(age > 16, -3.087618, -100)				
-      b <- 0 #ifelse(age > 16,  0.008507 , -100)
-      rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[9],1)
-      return(rate)					
-    }
-    
-    # R10: Severe to transplant
-    transFuns$severe_to_transplant_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook  
-      a <-  ifelse(age > 16, -2, -1000) #ifelse(age > 16, -0.81900, -100)
-      b <- 0 #ifelse(age > 16, -0.03228, -100)
-      rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[10],1)
-      return(rate)
-    }
-    
-    # R11: Transplant to dead
-    transFuns$transplant_to_dead_cftr <- function(age, calTime, duration){
-      #Coefficients from EDA notebook
-      a <- ifelse(age > 16, -3.218876, -1000)	 #ifelse(age > 16, -6.08533, -100)	
-      b <- 0 #ifelse(age > 16, 0.06924, -100)
-      rate <- invlogit(a + (b*age))
-      return(rate)
-    }
+    # DEFINING TRANSITION PROBABILITIES #
+    transFuns <- setTransitionFunctions()
     
     # Running simulation for patients without cftr mutation
     transitions_0cftr=cf_simulation(start_date, end_date, initPop=initPop_0cftr, immigrPop=inmigrPop_0cftr,'0cftr',transFuns)
@@ -686,43 +309,14 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     pop0cftr_long=Join_into_Longi(initPop_0cftr,transitions_0cftr,inmigrPop_0cftr,start_date)
     
     # Formatting and merging with initial datasets for number of patients
+    endData = formattingForSummary1(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,period_length,start_date,end_date,i)
     
-    ## Group cftr
-    Data_cftr = mergingSimData2(initData_cftr,popcftr_long, period_length, start_date, end_date)
-    ## Group 0cftr
-    Data_0cftr = mergingSimData2(initData_0cftr,pop0cftr_long, period_length, start_date, end_date)
-    
-    ## joining both groups in the same dataset
-    endData = bind_rows(Data_cftr,
-                        Data_0cftr,
-                        .id = 'group') %>%
-      mutate(
-        group = if_else(group == 1, 'cftr', 'non_cftr')
-      )
-    
-    endData['iteration']=i
-    
-    ## joining both groups in the same dataset
+    ## joining the result of this iteration with the previous
     simResults = bind_rows(simResults,
                            endData)
     
-    
     # Formatting and merging with initial datasets for survival analysis
-    ## Following mergings only keep the last change for each patient
-    ## Group cftr 
-    Data_cftr = mergingSimData(initData_cftr,popcftr_long)
-    ## Group 0cftr
-    Data_0cftr = mergingSimData(initData_0cftr,pop0cftr_long)
-    
-    endData = bind_rows(Data_cftr,
-                        Data_0cftr,
-                        .id = 'group') %>%
-      mutate(
-        group = if_else(group == 1, 'cftr', 'non_cftr'),
-        new_state= if_else(new_state=='dead',1,0)
-      ) 
-    
-    endData['iteration']=i
+    endData = formattingForSummary2(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,i)
     
     ## joining both groups in the same dataset
     simResults2 = bind_rows(simResults2,
@@ -866,7 +460,6 @@ initial_data_validation <- function(df) {
   valid=TRUE
   msg=""
   #columns names 
-  #print(sum(names(df) %in% c("ID","birthDate","genotype","initState")))
   if (sum(names(df) %in% c("ID","birthDate","genotype","initState"))!=4) {
     valid=FALSE
     msg="Error in columns names"
@@ -877,7 +470,6 @@ initial_data_validation <- function(df) {
   
   #genotypes
   analyzed_values=as.data.frame(table(df |> select(genotype) |> pull())) |> select(Var1) |> pull()
-  #print(analyzed_values)
   if (sum(analyzed_values == c("cftr","non_cftr"))!=2) {
     valid=FALSE
     msg="Error in genotype values"
@@ -888,8 +480,6 @@ initial_data_validation <- function(df) {
   
   #states
   analyzed_values=as.data.frame(table(df |> select(initState) |> pull())) |> select(Var1) |> pull()
-  #print(analyzed_values)
-  #print(analyzed_values == c("mild","moderate","severe","transplant"))
   if (sum(analyzed_values == c("mild","moderate","severe","transplant"))!=4) {
     valid=FALSE
     msg="Error in state values"
@@ -920,6 +510,292 @@ initial_data_validation <- function(df) {
   
   return(
     list(result=valid, msg=msg)
+  )
+  
+}
+
+setTransitionFunctions <- function() {
+  
+  transFuns=list()
+  invlogit <- function(x) exp(x)/(1 + exp(x))
+  
+  # _0cftr GROUP
+  
+  # R01: Mild to moderate
+  transFuns$mild_to_moderate_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -3.404598 #-3.417143
+    b <- 0.0322104 #0.038112
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R02: Mild to severe
+  transFuns$mild_to_severe_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -5.771441 #-10.828
+    b <- 0 #0.089
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R03: Mild to dead
+  transFuns$mild_to_dead_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -6.26, -1000) #ifelse(age > 16, -8.88787, -100)
+    b <- 0 #ifelse(age > 16, 0.07179 , -100)
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R04: Moderate to mild
+  transFuns$moderate_to_mild_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -0.7943486 #-0.30295
+    b <- -0.0419111 #-0.05760
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R05: Moderate to severe
+  transFuns$moderate_to_severe_0cftr <- function(age, calTime, duration){	
+    #Coefficients from EDA notebook
+    a <- -2.358466 #-2.602126
+    b <- 0 #0.011626
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R06: Moderate to dead
+  transFuns$moderate_to_dead_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -4.477337, -1000)  #ifelse(age > 16, -5.60136, -100) 
+    b <- 0 #ifelse(age > 16, 0.02164, -100)
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R07: Severe to mild
+  transFuns$severe_to_mild_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -6.51323  #-2.3653
+    b <- 0 #-0.1099
+    rate <- invlogit(a + (b*age))	
+    return(rate)
+  }
+  
+  # R08: Severe to moderate
+  transFuns$severe_to_moderate_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -2.509121 #-0.60430
+    b <- 0 #-0.04273
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R09: Severe to dead
+  transFuns$severe_to_dead_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -2.766158, -1000) #ifelse(age > 16, -3.087618, -100)				
+    b <- 0 #ifelse(age > 16,  0.008507 , -100)
+    rate <- invlogit(a + (b*age))					
+    return(rate)					
+  }
+  
+  # R10: Severe to transplant
+  transFuns$severe_to_transplant_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook  
+    a <- ifelse(age > 16, -2, -1000) #ifelse(age > 16, -0.81900, -100)
+    b <- 0 #ifelse(age > 16, -0.03228, -100)
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # R11: Transplant to dead
+  transFuns$transplant_to_dead_0cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -3.218876, -1000)	 #ifelse(age > 16, -6.08533, -100)	
+    b <- 0 #ifelse(age > 16, 0.06924, -100)
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  # _cftr GROUP
+  
+  # R01: Mild to moderate
+  transFuns$mild_to_moderate_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -3.870427  #-3.417143
+    b <- 0.0130938 #0.038112
+    rate <- invlogit(a + (b*age))*eR_vector[1]
+    return(rate)
+  }
+  
+  # R02: Mild to severe
+  transFuns$mild_to_severe_cftr <- function(age, calTime, duration){
+    # Coefficients from EDA notebook
+    # a <- -10.828
+    # b <- 0.089
+    # rate <- invlogit(a + (b*age))*eR_vector[2]
+    # return(rate)
+    return(0)
+  }
+  
+  # R03: Mild to dead
+  transFuns$mild_to_dead_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -6.26, -1000)  #ifelse(age > 16, -8.88787, -100)
+    b <- 0 #ifelse(age > 16, 0.07179 , -100)
+    rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[3],1)
+    return(rate)
+  }
+  
+  # R04: Moderate to mild
+  transFuns$moderate_to_mild_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -1.323925 #-0.30295
+    b <- -0.0409952 #-0.05760
+    rate <- invlogit(a + (b*age))*eR_vector[4]
+    return(rate)
+  }
+  
+  # R05: Moderate to severe
+  transFuns$moderate_to_severe_cftr <- function(age, calTime, duration){	
+    #Coefficients from EDA notebook
+    a <- -2.259841 #-2.602126
+    b <- -0.0345258 # 0.011626
+    rate <- invlogit(a + (b*age))*eR_vector[5]
+    return(rate)
+  }
+  
+  # R06: Moderate to dead
+  transFuns$moderate_to_dead_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -4.477337, -1000) # ifelse(age > 16, -5.60136, -100) 
+    b <- 0 #ifelse(age > 16, 0.02164, -100)
+    rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[6],1)
+    return(rate)
+  }
+  
+  # R07: Severe to mild
+  transFuns$severe_to_mild_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    # a <- -2.3653
+    # b <- -0.1099
+    # rate <- invlogit(a + (b*age))*eR_vector[7]
+    # return(rate)
+    return(0)
+  }
+  
+  # R08: Severe to moderate
+  transFuns$severe_to_moderate_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- -2.599317 #-0.60430
+    b <- 0  #-0.04273
+    rate <- invlogit(a + (b*age))*eR_vector[8]
+    return(rate)
+  }
+  
+  # R09: Severe to dead
+  transFuns$severe_to_dead_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -2.766158, -1000) #ifelse(age > 16, -3.087618, -100)				
+    b <- 0 #ifelse(age > 16,  0.008507 , -100)
+    rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[9],1)
+    return(rate)					
+  }
+  
+  # R10: Severe to transplant
+  transFuns$severe_to_transplant_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook  
+    a <-  ifelse(age > 16, -2, -1000) #ifelse(age > 16, -0.81900, -100)
+    b <- 0 #ifelse(age > 16, -0.03228, -100)
+    rate <- invlogit(a + (b*age))*if_else(age>16,eR_vector[10],1)
+    return(rate)
+  }
+  
+  # R11: Transplant to dead
+  transFuns$transplant_to_dead_cftr <- function(age, calTime, duration){
+    #Coefficients from EDA notebook
+    a <- ifelse(age > 16, -3.218876, -1000)	 #ifelse(age > 16, -6.08533, -100)	
+    b <- 0 #ifelse(age > 16, 0.06924, -100)
+    rate <- invlogit(a + (b*age))
+    return(rate)
+  }
+  
+  return(transFuns)
+  
+}
+
+formattingForSummary1 <- function(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,period_length,start_date,end_date,i) {
+  
+  ## Group cftr
+  Data_cftr = mergingSimData2(initData_cftr,popcftr_long, period_length, start_date, end_date)
+  ## Group 0cftr
+  Data_0cftr = mergingSimData2(initData_0cftr,pop0cftr_long, period_length, start_date, end_date)
+  
+  ## joining both groups in the same dataset
+  endData = bind_rows(Data_cftr,
+                      Data_0cftr,
+                      .id = 'group') %>%
+    mutate(
+      group = if_else(group == 1, 'cftr', 'non_cftr')
+    )
+  
+  endData['iteration']=i
+  
+  return(endData)
+  
+}
+
+formattingForSummary2 <- function(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,i) {
+  
+  ## Following mergings only keep the last change for each patient
+  ## Group cftr 
+  Data_cftr = mergingSimData(initData_cftr,popcftr_long)
+  ## Group 0cftr
+  Data_0cftr = mergingSimData(initData_0cftr,pop0cftr_long)
+  
+  endData = bind_rows(Data_cftr,
+                      Data_0cftr,
+                      .id = 'group') %>%
+    mutate(
+      group = if_else(group == 1, 'cftr', 'non_cftr'),
+      new_state= if_else(new_state=='dead',1,0)
+    ) 
+  
+  endData['iteration']=i
+  
+  return(endData)
+  
+}
+
+immigrAgeGroupGeneration <- function(Id, inmigr_probs, minAge, maxAge, n_years) {
+  
+  ageRange=paste(minAge,"-",maxAge, sep="")
+  
+  n=as.integer(inmigr_probs %>% filter(age_range==ageRange) %>% select(n))
+  M=n*n_years
+  
+  if (n>0) {
+    
+    immigrDatesRange <- as.numeric(c(start_date, end_date))
+    
+    immigrDates <- as.character(chron(immigrDatesRange[1] + runif(M, min=0 , max = diff(immigrDatesRange)),
+                                      out.format = c(dates = "d/m/year", times = "h:m:s")))
+    immigrDates <- as.Date(immigrDates, format("(%d/%b/%Y"))
+    
+    immigrAges <- round(runif(M, min = minAge, max = maxAge) * 365, 0)
+    immigrBirthDates <- immigrDates - lubridate::days(immigrAges)
+    return(
+      data.frame(ID = Id, immigrDate = immigrDates, birthDate=immigrBirthDates, 
+                             immigrInitState = "mild")
+    )
+    
+  }
+    
+  return(
+    data.frame()
   )
   
 }
