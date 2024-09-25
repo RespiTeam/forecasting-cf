@@ -16,7 +16,7 @@ library(promises)
 
 transition_data=tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
-  to = c("Moderate", "Severe","Dead","Mild", "Severe","Dead", "Mild", "Moderate", "Transplant", "Dead","Dead"),
+  to = c("Moderate", "Severe","Dead","Mild", "Severe","Dead", "Mild", "Moderate", "Dead","Transplant","Dead"),
   assumptions=c("","","Limited to age > 16 years",
                 "","","Limited to age > 16 years",
                 "","","Limited to age > 16 years","Limited to age > 16 years",
@@ -26,8 +26,8 @@ transition_data=tibble(
             "I (−1.323925 − 0.0409952 * age)", "I (−2.259841 - 0.0345258 * age)", "I (−4.477337)",
             "0","I (−2.599317)","I (−2.0)","I (−2.766158)",
             "I (−3.218876)"),
-  Optimistic = c(0, 0, 0, 100, 0, 0, 100, 100, 90, 70, 100),
-  Custom = rep(100,11)
+  Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.9, 0.7, 0),
+  Custom = rep(0,11)
 )
 
 newcases_ages_data=tibble(
@@ -52,7 +52,7 @@ function(input, output, session) {
     barplot1 <- reactiveValues(data = NULL)
     barplot2 <- reactiveValues(data = NULL)
     hospiplot <- reactiveValues(data = NULL)
-    erDF508 <- reactiveVal(rep(1,10))
+    erDF508 <- reactiveVal(rep(0,10))
     rv <- reactiveValues(data = transition_data)
     rv2 <- reactiveValues(data = newcases_ages_data)
     initial_pop <- reactiveValues(data = data)
@@ -145,7 +145,8 @@ function(input, output, session) {
         new_0F508=as.integer(input$newCases*(1-prop508))
         
         initial_data=initial_pop$data
-        verDF508=erDF508()
+        verDF508=1-erDF508()
+        print(verDF508)
         dist_ages_newcases=rv2$data
         
         future({
@@ -243,10 +244,11 @@ function(input, output, session) {
       
       eRs=erDF508()
       
-      choices = c('Optimistic', 'Custom')
+      choices = c('Pessimistic','Optimistic', 'Custom')
       selected_col <- match(input$scenarios, choices)
-        
-      eRs=as.numeric(rv$data[,selected_col+4] |> pull())/100
+      
+      if (selected_col==1) eRs=rep(0,10)
+      else  eRs=as.numeric(rv$data[,selected_col+3] |> pull())
 
       erDF508(eRs)
 
@@ -257,7 +259,10 @@ function(input, output, session) {
     output$transitions_table=renderDT(
       rv$data, 
       editable = list(target = "cell", disable = list(columns = c(1, 2, 3,4))),
-      colnames = c("From", "To", "Assumptions","Coefficients", "Optimistic (%)", "Custom (%)"),
+      colnames = c("From", "To", "Assumptions", 
+                   "Transition coefficients estimated in 2021 based on conservative effectiveness of CFTR modulators", 
+                   "Optimistic reduction in transition probability based con contemporary evidence", 
+                   "Custom reduction in transition probability"),
       rownames = FALSE,
       selection = 'none',
       options = list(
@@ -270,14 +275,14 @@ function(input, output, session) {
     observeEvent(input$transitions_table_cell_edit, {
       info <- input$transitions_table_cell_edit
       
-      if (as.numeric(info$value)<=100 & as.numeric(info$value)>=0 ) {
+      if (as.numeric(info$value)<=1 & as.numeric(info$value)>=-1 ) {
         # Update the reactive data with the new value
         rv$data[info$row, info$col + 1] <- as.numeric(info$value)
       } else {
        
         showModal(modalDialog(
           title = "Invalid percentage",
-          "Percentages should be values between 0 and 100",
+          "Reductions are expressed in ratios, they should be values between -1 and 1",
           easyClose = TRUE,
           footer = NULL
         ))
@@ -286,7 +291,10 @@ function(input, output, session) {
         output$transitions_table=renderDT(
           rv$data, 
           editable = list(target = "cell", disable = list(columns = c(1, 2, 3, 4))),
-          colnames = c("From", "To", "Assumptions", "Coefficients", "Optimistic (%)", "Custom (%)"),
+          colnames = c("From", "To", "Assumptions", 
+                       "Transition coefficients estimated in 2021 based on conservative effectiveness of CFTR modulators", 
+                       "Optimistic reduction in transition probability based con contemporary evidence", 
+                       "Custom reduction in transition probability"),
           rownames = FALSE,
           selection = 'none',
           options = list(dom = 't'),
@@ -300,7 +308,7 @@ function(input, output, session) {
     output$newcases_groups=renderDT(
       rv2$data, 
       editable = list(target = "cell", disable = list(columns = c(0))),
-      colnames = c("Age at Diagnosis Group", "%"),
+      colnames = c("Age distribution of new diagnoses", "%"),
       rownames = FALSE,
       selection = 'none',
       options = list(
@@ -391,7 +399,8 @@ function(input, output, session) {
             axis.text.y = element_text(size = 14)
           )
         
-        print(p)
+        p
+        # print(p)
         
       }
     })
@@ -497,7 +506,8 @@ function(input, output, session) {
             axis.text.y = element_text(size = 14)
           )
         
-        print(p)
+        p
+        # print(p)
         
       }
     })

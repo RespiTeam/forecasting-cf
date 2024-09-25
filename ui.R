@@ -146,6 +146,7 @@ page_sidebar(
     tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
     tags$link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css", integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH", crossorigin="anonymous"),
     tags$script(HTML(js)),
+    tags$title("CF forecasting app")
   ),
   
   tags$body(
@@ -159,9 +160,11 @@ page_sidebar(
     tags$script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz", crossorigin="anonymous")
   ),
   
-  title= span(
-           app_details
-         ),
+  titlePanel(HTML("<p class='h6'>Cystic Fibrosis population forecasting<br>
+                  <small class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
+                  CF clinicians and researchers understanding the changing demographics of the 
+                  population and healthcare resources needs given the current knowledge of the 
+                  benefits of CFTR modulators on key clinical outcomes.</small><p>")),
   
   # helpText("Brief explanation"),
   
@@ -177,11 +180,14 @@ page_sidebar(
                  choiceNames = list(
                    HTML("<span class='py-3 pe-5'>
                           <strong class='fw-semibold'>Use 2021 Canadian CF Population</strong>
-                          <span class='d-block small opacity-75'>Some other text goes here</span>
+                          <span class='d-block small opacity-75'>The baseline demographics age distribution and disease severity 
+                          of the Canadian cystic fibrosis population in 2021 will be used. For further details please see the 
+                          Canadian CF registry report or file attached here</span>
                         </span>"),
                    HTML("<span class='py-3 pe-5'>
                           <strong class='fw-semibold'>Use your own data</strong>
-                          <span class='d-block small opacity-75'>Some other text goes here</span>
+                          <span class='d-block small opacity-75'>Upload a customized excel sheet with the specific demographic 
+                          clinical characteristics of your population. No individual identifying information is necessary.</span>
                         </span>")
                  ),
                  choiceValues = list(
@@ -220,11 +226,11 @@ page_sidebar(
       )
     ),
     
-    tags$h5("New cases"),
+    tags$h5("Assumptions"),
     
     layout_columns(
       col_widths = c(8, 4),
-      "New diagnosis: ",
+      "N° of new diagnosis anticipated per year: ",
       numericInput(
         inputId = "newCases",
         label = NULL,
@@ -235,9 +241,14 @@ page_sidebar(
         width=90
       )
     ),
+    fluidRow(
+      column(12,
+             DTOutput("newcases_groups")
+      )
+    ),
     layout_columns(
       col_widths = c(8, 4),
-      "% CFTR modulator eligible: ",
+      "% of population eligible for CFTR modulator: ",
       numericInput(
         inputId = "prop508",
         label = NULL,
@@ -248,13 +259,6 @@ page_sidebar(
         width=90
       )
     ),
-    
-    fluidRow(
-      column(12,
-         DTOutput("newcases_groups")
-      )
-    ),
-    
     
     tags$h5("Simulation Details"),
     
@@ -288,7 +292,13 @@ page_sidebar(
     ),
     
     span(
-      "Number of simulations: ",
+      tooltip(
+        trigger = list(
+          "Number of simulations: ",
+          bs_icon("info-circle")
+        ),
+        "There is an inherent variability in the simulations results but, 10 simulations is enough. More simulations will take more time and results won't vary much."
+      ),
       tags$div(
         numericInput(
           inputId = "nSim",
@@ -299,6 +309,11 @@ page_sidebar(
         ),
         style="display:inline-block"
       )
+    ),
+    
+    selectInput("scenarios",
+                label = "Use percentages from",
+                choices = c('Pessimistic','Optimistic', 'Custom'),
     ),
     
     span(
@@ -339,6 +354,6 @@ page_sidebar(
     id= 'tabs',
     title = "",
     nav_panel("Output", outputTab("outputTab")),
-    nav_panel("Transition Rates", transitionRatesTab("transitionTab"))
+    nav_panel("CFTR Transition Rates", transitionRatesTab("transitionTab"))
   )
 )

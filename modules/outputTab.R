@@ -4,7 +4,7 @@ barplot1Filter <- popover(
   selectInput(
     "genotypeFilter",
     label = "Genotype",
-    choices = c('All', 'Delta 508', 'Non-delta 508')
+    choices = c('All', 'CFTR modulator', 'Non-CFTR modulator')
   ),
   selectInput(
     "ageFilter_barplot1",
@@ -79,6 +79,7 @@ outputTab <- function(id) {
             fill = TRUE,
             full_screen = TRUE,
             card_header(
+              "Disease Severity",
               barplot1Filter,
             ),
             card_body(
@@ -89,6 +90,7 @@ outputTab <- function(id) {
             fill = TRUE,
             full_screen = TRUE,
             card_header(
+              "Total Population",
               barplot2Filter,
             ),
             card_body(
@@ -104,6 +106,7 @@ outputTab <- function(id) {
             fill = TRUE,
             full_screen = TRUE,
             card_header(
+              "Survival Curves",
             ),
             card_body(
               plotOutput(outputId = "kmPlot")
@@ -113,6 +116,7 @@ outputTab <- function(id) {
             fill = TRUE,
             full_screen = TRUE,
             card_header(
+              "Pulmonary Exacerbations",
               hospiFilter,
             ),
             card_body(

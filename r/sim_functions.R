@@ -76,14 +76,7 @@ cf_simulation <- function(start_date=as.Date("2020-01-01"), end_date=as.Date("20
   #Creating a dataframe. Not the best using expan.grid function
   stateSpace <- expand.grid(lungfunction = lungfunction)
   
-  ### Defining transition probability functions ###
-  
-  ### End of transition probability function definition ###
-  
   # Setting the functions for the scenarios and the group. group should be 'cftr' or 'non_cftr'
-  # Scenario 0: Base
-  # Scenario 1: Realistic
-  # Scenario 2: Best
   
   R=c()
   R[1]='mild_to_moderate'
@@ -287,8 +280,6 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     ## Generating immigration groups
     # for patients without cftr mutation
     lastID=max(initPop_0cftr$ID)
-    print(start_date)
-    print(end_date)
     inmigrPop_0cftr=build_immigr_pop(start_date, end_date, new_0cftr,lastID, inmigr_probs)
     
     # for patients with cftr mutation
@@ -328,7 +319,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
   summarizeResults=buildingSummarizeData(simResults, start_date)
   
   # Building dataset for plotting K-M curve
-  summarizeKMResults=buildingSummarizeKMData(simResults2)
+  summarizeKMResults=buildingSummarizeKMData(simResults2, end_date)
   
   return(
     list("qty"=summarizeResults,"km"=summarizeKMResults)
@@ -420,12 +411,13 @@ buildingSummarizeData<- function(simResults, start_date) {
 }
 
 
-buildingSummarizeKMData <- function(simResults2) {
+buildingSummarizeKMData <- function(simResults2, end_date) {
   
   kmResults=tibble()
   
   kmData=simResults2 |> 
     mutate(
+      current_date = if_else(new_state==0, end_date, current_date),
       time=round(as.numeric(difftime(current_date,birthDate, units="days")/365),2),
       group=as.factor(group)
     ) |> rename(
