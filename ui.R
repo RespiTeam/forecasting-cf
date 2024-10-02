@@ -15,8 +15,10 @@ library(bsicons)
 library(htmltools)
 library(DT)
 library(gt)
+library(auth0)
 
 source("modules/transitionRatesTab.R")
+source("modules/newCasesTab.R")
 source("modules/outputTab.R")
 source("modules/uploadFileCard.R")
 source("modules/modelGraph.R")
@@ -137,223 +139,241 @@ opencollective <-
   )
 
 
-# Define UI for application that draws a histogram
-page_sidebar(
-  useShinyjs(),
-  # theme=my_theme,
-  # Include the custom CSS file
-  tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
-    tags$link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css", integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH", crossorigin="anonymous"),
-    tags$script(HTML(js)),
-    tags$title("CF forecasting app")
-  ),
-  
-  tags$body(
-    tags$div(
-      HTML(validation_modal("valTo","Forecast cannot be longer than 25 years")),
-      HTML(validation_modal("valNewCases","It should be a value between 1 and 150")),
-      HTML(validation_modal("valPct","It should be a value between 0 and 100")),
-      HTML(validation_modal("valBreaks","It should be a value less than the length of the forecast and it cannot be negative")),
-      HTML(validation_modal("valIters","Tha maximum number of iterations is 1000 and it should be greater than 0")),
+ui <- auth0_ui(
+  # Define UI for application that draws a histogram
+  page_sidebar(
+    useShinyjs(),
+    # theme=my_theme,
+    # Include the custom CSS file
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+      tags$link(
+        rel = "stylesheet",
+        href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+        integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+        crossorigin = "anonymous"
       ),
-    tags$script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js", integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz", crossorigin="anonymous")
-  ),
-  
-  titlePanel(HTML("<p class='h6'>Cystic Fibrosis population forecasting<br>
-                  <small class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
-                  CF clinicians and researchers understanding the changing demographics of the 
-                  population and healthcare resources needs given the current knowledge of the 
-                  benefits of CFTR modulators on key clinical outcomes.</small><p>")),
-  
-  # helpText("Brief explanation"),
-  
-  # Inputs: Select variables to plot
-  sidebar = sidebar(
-    #Properties of sidebar"
-    #title = "Input data",
-
-    width = 400,
-    #Controls
-    tags$h5("Population Settings"),
-    radioButtons("rb_initial_population",NULL,
-                 choiceNames = list(
-                   HTML("<span class='py-3 pe-5'>
-                          <strong class='fw-semibold'>Use 2021 Canadian CF Population</strong>
-                          <span class='d-block small opacity-75'>The baseline demographics age distribution and disease severity 
-                          of the Canadian cystic fibrosis population in 2021 will be used. For further details please see the 
-                          Canadian CF registry report or file attached here</span>
-                        </span>"),
-                   HTML("<span class='py-3 pe-5'>
-                          <strong class='fw-semibold'>Use your own data</strong>
-                          <span class='d-block small opacity-75'>Upload a customized excel sheet with the specific demographic 
-                          clinical characteristics of your population. No individual identifying information is necessary.</span>
-                        </span>")
-                 ),
-                 choiceValues = list(
-                   "canada", "own"
-                 )
+      tags$script(HTML(js)),
+      tags$title("CF forecasting app")
     ),
     
-    card(
-      fill = FALSE,
-      full_screen = FALSE,
-      id="initial_data_card",
-      card_header(
-        tags$h5(
-          span(
-            "Load Initial Population",
-            foot
+    tags$body(
+      tags$div(
+        HTML(
+          validation_modal("valTo", "Forecast cannot be longer than 25 years")
+        ),
+        HTML(
+          validation_modal("valNewCases", "It should be a value between 1 and 150")
+        ),
+        HTML(
+          validation_modal("valPct", "It should be a value between 0 and 100")
+        ),
+        HTML(
+          validation_modal(
+            "valBreaks",
+            "It should be a value less than the length of the forecast and it cannot be negative"
           )
-        )
+        ),
+        HTML(
+          validation_modal(
+            "valIters",
+            "Tha maximum number of iterations is 1000 and it should be greater than 0"
+          )
+        ),
       ),
-      card_body(
-        layout_columns(
+      tags$script(
+        src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+        integrity = "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
+        crossorigin = "anonymous"
+      )
+    ),
+    
+    titlePanel(
+      HTML(
+        "<p class='h6'>Cystic Fibrosis population forecasting<br>
+                  <small class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
+                  CF clinicians and researchers understanding the changing demographics of the
+                  population and healthcare resources needs given the current knowledge of the
+                  benefits of CFTR modulators on key clinical outcomes.</small><p>"
+      )
+    ),
+    
+    # helpText("Brief explanation"),
+    
+    # Inputs: Select variables to plot
+    sidebar = sidebar(
+      #Properties of sidebar"
+      #title = "Input data",
+      
+      width = 400,
+      #Controls
+      tags$h5("Population Settings"),
+      radioButtons(
+        "rb_initial_population",
+        NULL,
+        choiceNames = list(
+          HTML(
+            "<span class='py-3 pe-5'>
+                          <strong class='fw-semibold'>Use 2021 Canadian CF Population</strong>
+                          <span class='d-block small opacity-75'>The baseline demographics age distribution and disease severity
+                          of the Canadian cystic fibrosis population in 2021 will be used. For further details please see the
+                          Canadian CF registry report or file attached here</span>
+                        </span>"
+          ),
+          HTML(
+            "<span class='py-3 pe-5'>
+                          <strong class='fw-semibold'>Use your own data</strong>
+                          <span class='d-block small opacity-75'>Upload a customized excel sheet with the specific demographic
+                          clinical characteristics of your population. No individual identifying information is necessary.</span>
+                        </span>"
+          )
+        ),
+        choiceValues = list("canada", "own")
+      ),
+      
+      card(
+        fill = FALSE,
+        full_screen = FALSE,
+        id = "initial_data_card",
+        card_header(tags$h5(span(
+          "Load Initial Population", foot
+        ))),
+        card_body(layout_columns(
           col_widths = c(8, 4),
           fileInput(
-            inputId="initial_data",
-            label=NULL,
+            inputId = "initial_data",
+            label = NULL,
             multiple = FALSE,
             buttonLabel = "Browse...",
             placeholder = "No file selected (.csv)",
-            accept = c(
-              "csv",
-              "comma-separated-values,plain",
-              ".csv")
+            accept = c("csv", "comma-separated-values,plain", ".csv")
           ),
-          actionButton(inputId="btnInitialData" ,label = "Load", icon = NULL, width = NULL)
-        )
-      )
-    ),
-    
-    tags$h5("Assumptions"),
-    
-    layout_columns(
-      col_widths = c(8, 4),
-      "N° of new diagnosis anticipated per year: ",
-      numericInput(
-        inputId = "newCases",
-        label = NULL,
-        value = 87,
-        min = 0, 
-        max = 150,
-        step = 1,
-        width=90
-      )
-    ),
-    fluidRow(
-      column(12,
-             DTOutput("newcases_groups")
-      )
-    ),
-    layout_columns(
-      col_widths = c(8, 4),
-      "% of population eligible for CFTR modulator: ",
-      numericInput(
-        inputId = "prop508",
-        label = NULL,
-        value = 97.6,
-        step = 0.1,
-        min = 0, 
-        max = 100,
-        width=90
-      )
-    ),
-    
-    tags$h5("Simulation Details"),
-    
-    layout_columns(
-      shinyjs::disabled(
-        numericInput(
-          inputId = "from",
-          label =  tooltip(
-            trigger = list(
-              "From:",
-              bs_icon("info-circle")
+          actionButton(
+            inputId = "btnInitialData" ,
+            label = "Load",
+            icon = NULL,
+            width = NULL
+          )
+        ))
+      ),
+      
+      # tags$h5("Assumptions"),
+      # 
+      # layout_columns(
+      #   col_widths = c(8, 4),
+      #   "N° of new diagnosis anticipated per year: ",
+      #   numericInput(
+      #     inputId = "newCases",
+      #     label = NULL,
+      #     value = 87,
+      #     min = 0,
+      #     max = 150,
+      #     step = 1,
+      #     width = 90
+      #   )
+      # ),
+      # fluidRow(column(12, DTOutput("newcases_groups"))),
+      # layout_columns(
+      #   col_widths = c(8, 4),
+      #   "% of population eligible for CFTR modulator: ",
+      #   numericInput(
+      #     inputId = "prop508",
+      #     label = NULL,
+      #     value = 97.6,
+      #     step = 0.1,
+      #     min = 0,
+      #     max = 100,
+      #     width = 90
+      #   )
+      # ),
+      
+      tags$h5("Simulation Details"),
+      
+      layout_columns(
+        shinyjs::disabled(
+          numericInput(
+            inputId = "from",
+            label =  tooltip(
+              trigger = list("From:", bs_icon("info-circle")),
+              "To change start date you need to load initial data"
             ),
-            "To change start date you need to load initial data"
-          ),
-          value = 2021,
+            value = 2021,
+            step = 1,
+          )
+        ),
+        numericInput(
+          inputId = "to",
+          label =  tooltip(trigger = list("To:", bs_icon("info-circle")), "Up to 25+"),
+          value = as.integer(format(Sys.Date(), "%Y")) + 1,
           step = 1,
         )
-      ), 
-      numericInput(
-        inputId = "to",
-        label =  tooltip(
-          trigger = list(
-            "To:",
-            bs_icon("info-circle")
-          ),
-          "Up to 25+"
-        ),
-        value = as.integer(format(Sys.Date(), "%Y"))+1,
-        step = 1,
-      )
-    ),
-    
-    span(
-      tooltip(
-        trigger = list(
-          "Number of simulations: ",
-          bs_icon("info-circle")
-        ),
-        "There is an inherent variability in the simulations results but, 10 simulations is enough. More simulations will take more time and results won't vary much."
       ),
-      tags$div(
-        numericInput(
-          inputId = "nSim",
-          label = NULL,
-          value = 5,
-          step = 10,
-          width=100
+      
+      span(
+        tooltip(
+          trigger = list("Number of simulations: ", bs_icon("info-circle")),
+          "There is an inherent variability in the simulations results but, 10 simulations is enough. More simulations will take more time and results won't vary much."
         ),
-        style="display:inline-block"
-      )
-    ),
-    
-    selectInput("scenarios",
-                label = "Use percentages from",
-                choices = c('Pessimistic','Optimistic', 'Custom'),
-    ),
-    
-    span(
-      "Display results by ",
-      tags$div(
-        numericInput(
-          inputId = "breaks",
-          label = NULL,
-          value = 2,
-          step = 1,
-          width=55
+        tags$div(
+          numericInput(
+            inputId = "nSim",
+            label = NULL,
+            value = 5,
+            step = 10,
+            width = 100
           ),
-        style="display:inline-block"
+          style = "display:inline-block"
+        )
       ),
-      " years intervals"
+      
+      selectInput(
+        "scenarios",
+        label = "Use percentages from",
+        choices = c('Pessimistic', 'Optimistic', 'Custom'),
+      ),
+      
+      span(
+        "Display results by ",
+        tags$div(
+          numericInput(
+            inputId = "breaks",
+            label = NULL,
+            value = 2,
+            step = 1,
+            width = 55
+          ),
+          style = "display:inline-block"
+        ),
+        " years intervals"
+      ),
+      
+      # selectInput(
+      #   inputId="genotypeFilter2",
+      #   label = "Genotype",
+      #   choices = c('All', 'Delta 508', 'Non-delta 508'),
+      # ),
+      # bslib::input_action_button("runSim", "Run Simulations"),
+      actionButton("runSim", "Run Simulations"),
+      tags$div(
+        tags$img(src = "icons8-github-24.png"),
+        tags$br(),
+        "Respiratory Epidemiology Research Team",
+        tags$br(),
+        "Dalhousie University",
+        tags$br(),
+        HTML(
+          "<a target='_blank' href='https://icons8.com/icon/106562/github'>GitHub</a> icon by <a target='_blank' href='https://icons8.com'>Icons8</a>"
+        ),
+        class = "respi-footer"
+      ),
     ),
-    
-    # selectInput(
-    #   inputId="genotypeFilter2",
-    #   label = "Genotype",
-    #   choices = c('All', 'Delta 508', 'Non-delta 508'),
-    # ),
-    # bslib::input_action_button("runSim", "Run Simulations"),
-    actionButton("runSim", "Run Simulations"),
-    tags$div(
-      tags$img(src="icons8-github-24.png"),
-      tags$br(),
-      "Respiratory Epidemiology Research Team",
-      tags$br(),
-      "Dalhousie University",
-      tags$br(),
-      HTML("<a target='_blank' href='https://icons8.com/icon/106562/github'>GitHub</a> icon by <a target='_blank' href='https://icons8.com'>Icons8</a>"),
-      class="respi-footer"
-    ),
-  ),
-  # Output: Show scatterplot
-  navset_card_underline(
-    id= 'tabs',
-    title = "",
-    nav_panel("Output", outputTab("outputTab")),
-    nav_panel("CFTR Transition Rates", transitionRatesTab("transitionTab"))
+    # Output: Show scatterplot
+    navset_card_underline(
+      id = 'tabs',
+      title = "",
+      nav_panel("Output", outputTab("outputTab")),
+      nav_panel("CFTR Transition Rates", transitionRatesTab("transitionTab")),
+      nav_panel("More Settings", newCasesTab("newCasesTab"))
+    )
   )
 )

@@ -24,15 +24,21 @@ transition_data=tibble(
                 ),
   Coeff = c("I (−3.870427 + 0.0130938 * age)","0","I (−6.26)",
             "I (−1.323925 − 0.0409952 * age)", "I (−2.259841 - 0.0345258 * age)", "I (−4.477337)",
-            "0","I (−2.599317)","I (−2.0)","I (−2.766158)",
+            "0","I (−2.599317)","I (−2.766158)","I (−2.0)",
             "I (−3.218876)"),
-  Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.9, 0.7, 0),
+  Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.7, 0.9, 0),
   Custom = rep(0,11)
 )
 
 newcases_ages_data=tibble(
   age_range=c('0-1','1-2','2-18','18-40'), 
   prob=c(0.672,0.103,0.155,0.07)
+)
+
+exacerbations_ratios=tibble(
+  state=c('mild','moderate','severe'),
+  cftr=c(0.055,0.55,1.35),
+  non_cftr=c(0.09,0.9,2.2)
 )
 
 data <- read.csv(file = "data/defaultData.csv")
@@ -45,7 +51,7 @@ source('r/auxFctMicSim.r')
 plan(multisession)
 
 # Define server logic required to draw a histogram
-function(input, output, session) {
+server <- auth0_server(function(input, output, session) {
   
     #Defining reactive values
     simOutput <- reactiveValues(data = NULL)
@@ -55,6 +61,7 @@ function(input, output, session) {
     erDF508 <- reactiveVal(rep(0,10))
     rv <- reactiveValues(data = transition_data)
     rv2 <- reactiveValues(data = newcases_ages_data)
+    rv_exa <- reactiveValues(data = exacerbations_ratios)
     initial_pop <- reactiveValues(data = data)
     scenario <- reactiveVal("")
     toYear <- reactiveVal("")
@@ -356,6 +363,66 @@ function(input, output, session) {
       
     })
     
+    # Exacerbations Rates table
+    output$exacerbations_table=renderDT(
+      rv_exa$data, 
+      editable = list(target = "cell", disable = list(columns = c(0))),
+      colnames = c("State", "CTFR", "Non-CFTR"),
+      rownames = FALSE,
+      selection = 'none',
+      options = list(
+        dom = 't'
+      ),
+      server = TRUE
+    )
+    
+    # Observe cell edits in Exacerbations Rates table
+    observeEvent(input$exacerbations_table_cell_edit, {
+      info <- input$exacerbations_table_cell_edit
+      
+      if (!is.na(as.numeric(info$value))) {
+        
+        # Update the reactive data with the new value
+        rv_exa$data[info$row, info$col + 1] <- as.numeric(info$value)
+        
+      } else {
+        
+        showModal(modalDialog(
+          title = "Invalid proportion",
+          "You should enter a number",
+          easyClose = TRUE,
+          footer = NULL
+        ))
+        
+      }
+      
+      # Revert the change
+      if (is.na(as.numeric(info$value))) {
+        
+        output$exacerbations_table=renderDT(
+          rv_exa$data, 
+          editable = list(target = "cell", disable = list(columns = c(0))),
+          colnames = c("State", "CTFR", "Non-CFTR"),
+          rownames = FALSE,
+          selection = 'none',
+          options = list(
+            dom = 't'
+          ),
+          server = TRUE
+        )
+        
+      }
+      
+    })
+    
+    # Go back to default values
+    observeEvent(input$btnDefaultExaRatios, {
+      
+      rv_exa$data=exacerbations_ratios
+      print('se ejecuta')
+      
+    })
+    
     # OUTPUT PLOTS
     
     output$selected_scenario <- renderText({
@@ -444,13 +511,13 @@ function(input, output, session) {
     output$kmPlot <- renderPlot({
       
       if (!is.null(simOutput$data)) {
-        
+
         #start to plotting
-        simOutput$data$km |> 
+        simOutput$data$km |>
           ggplot(aes(x=time, y=survival, colour = group)) +
           geom_step(direction="hv") +
           geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray")+
-          theme_classic() + 
+          theme_classic() +
           labs(y=paste("Survival Probaility at ",toYear(),sep=""), x="Time (Age)")+
           scale_colour_brewer(
             palette = "Set1",
@@ -463,8 +530,53 @@ function(input, output, session) {
             axis.text.y = element_text(size = 14)
           )+
           scale_x_continuous(limits = c(0, 80))
-        
+
       }
+      
+      # if (!is.null(hospiplot$data)) {
+      #   
+      #   datag= hospiplot$data
+      #   
+      #   #start to plotting
+      #   datag = datag |> filter(state != 'dead' & state!="transplant")
+      #   
+      #   datag = datag |> mutate(
+      #     hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*0.09,0),
+      #                    state=="moderate" & group=="Non-CFTR modulator"~round(med*0.9,0),
+      #                    state=="severe" & group=="Non-CFTR modulator"~round(med*2.2,0),
+      #                    state=="mild" & group=="CFTR modulator"~round(med*0.055,0),
+      #                    state=="moderate" & group=="CFTR modulator"~round(med*0.55,0),
+      #                    state=="severe" & group=="CFTR modulator"~round(med*1.35,0))
+      #   ) |>
+      #     group_by(milestone) |>
+      #     summarise(
+      #       med=sum(med),
+      #       hosp=sum(hosp),
+      #       .groups="drop"
+      #     ) |> mutate(
+      #       ratio_hosp=hosp/med
+      #     )
+      #   
+      #   p = ggplot(data= datag,aes(
+      #     x = milestone,
+      #     y = ratio_hosp
+      #   )) +
+      #     geom_line() +
+      #     geom_line( color="grey") +
+      #     geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+      #     theme_classic()+
+      #     labs(y = "Ratio of exacerbations of CF population", x = "", fill = "") +
+      #     theme(legend.position = "bottom")+
+      #     theme(
+      #       legend.text = element_text(size = 14),  # Adjust the size as needed
+      #       axis.text.x = element_text(size = 14),
+      #       axis.text.y = element_text(size = 14)
+      #     )
+      #   
+      #   p
+      #   # print(p)
+      #   
+      # }
         
     })
     
@@ -474,16 +586,18 @@ function(input, output, session) {
         
         datag= hospiplot$data
         
+        ratios_tb = rv_exa$data
+        
         #start to plotting
         datag = datag |> filter(state != 'dead' & state!="transplant")
         
         datag = datag |> mutate(
-            hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*0.09,0),
-                           state=="moderate" & group=="Non-CFTR modulator"~round(med*0.9,0),
-                           state=="severe" & group=="Non-CFTR modulator"~round(med*2.2,0),
-                           state=="mild" & group=="CFTR modulator"~round(med*0.055,0),
-                           state=="moderate" & group=="CFTR modulator"~round(med*0.55,0),
-                           state=="severe" & group=="CFTR modulator"~round(med*1.35,0))
+            hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
+                           state=="moderate" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
+                           state=="severe" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
+                           state=="mild" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
+                           state=="moderate" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
+                           state=="severe" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
           ) |>
           group_by(milestone, state) |>
           summarise(
@@ -513,5 +627,6 @@ function(input, output, session) {
     })
 
 }
+)
 
 

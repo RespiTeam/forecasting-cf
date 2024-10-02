@@ -1,6 +1,12 @@
 
+Mockups/
+Testing/
 data/
 rsconnect/
+renv/
+Testing/
 
 server_extended.R
 
+.Renviron.R
+.Rproj.user

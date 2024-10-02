@@ -166,8 +166,8 @@ Join_into_Longi = function(initPop,micsimCFpop,immigrPop,start_date) {
 }
 
 
-# Function to merge inital Data with longitudinal data #
-# It keeps only the last record per patient in the longitudinal data #
+# Function to merge initial Data with longitudinal data #
+# It keeps only the first and last record per patient in the longitudinal data #
 mergingSimData<-function(initData,pop_long) {
   
   # Selecting the last appearance of each subject
@@ -176,14 +176,22 @@ mergingSimData<-function(initData,pop_long) {
   # When a transition happens the same day than its initial state could result in a duplicate, so in that cases we take the last source, ie. immigration initial status (initPop=1,transitions=2,immigrPop=3)
   last_pop <- last_pop %>% group_by(ID) %>% top_n(1, source)
   
+  # First appereance
+  first_pop <- pop_long %>% 
+    group_by(ID) %>% 
+    slice_min(order_by = current_date, n = 1) %>%
+    ungroup()
+  
   # Adding the result of the simulation to initial dataset
-  initData = initData |>select(!birthDate) %>% 
+  initData = initData |>select(!birthDate & !initState) %>% 
+    full_join(
+      first_pop |>
+        select(ID,birthDate,initState,enter_date=current_date),
+      by=join_by(ID)
+    ) |> 
     full_join(
       last_pop %>% 
-        select(ID,birthDate,initState,current_date) %>%
-        rename(
-          new_state=initState
-        ),
+        select(ID,new_state=initState,current_date), 
       by=join_by(ID)
     )
   
@@ -287,7 +295,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     inmigrPop_cftr=build_immigr_pop(start_date, end_date, new_cftr,lastID, inmigr_probs)
     
     # DEFINING TRANSITION PROBABILITIES #
-    transFuns <- setTransitionFunctions()
+    transFuns <- setTransitionFunctions(eR_vector)
     
     # Running simulation for patients without cftr mutation
     transitions_0cftr=cf_simulation(start_date, end_date, initPop=initPop_0cftr, immigrPop=inmigrPop_0cftr,'0cftr',transFuns)
@@ -418,7 +426,8 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
   kmData=simResults2 |> 
     mutate(
       current_date = if_else(new_state==0, end_date, current_date),
-      time=round(as.numeric(difftime(current_date,birthDate, units="days")/365),2),
+      exit_time=round(as.numeric(difftime(current_date,birthDate, units="days")/365),2),
+      enter_time=round(as.numeric(difftime(enter_date,birthDate, units="days")/365),2),
       group=as.factor(group)
     ) |> rename(
       status=new_state
@@ -426,7 +435,7 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
   
   for (i in unique(simResults2$iteration)) {
     
-    sp <- summary(survfit2(Surv(time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
+    sp <- summary(survfit2(Surv(enter_time, exit_time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
     kmResults=bind_rows(kmResults,
                         tibble(time=sp$time, atRisk=sp$n.risk, nEvents=sp$n.event, survival=sp$surv, group=sp$strata, iteration=i)
     )
@@ -506,7 +515,7 @@ initial_data_validation <- function(df) {
   
 }
 
-setTransitionFunctions <- function() {
+setTransitionFunctions <- function(eR_vector) {
   
   transFuns=list()
   invlogit <- function(x) exp(x)/(1 + exp(x))
