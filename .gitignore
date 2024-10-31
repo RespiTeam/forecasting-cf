@@ -8,7 +8,7 @@ Testing/
 
 server_extended.R
 
-.Renviron.R
+.Renviron
 .Rproj.user
 
 .DS_Store
