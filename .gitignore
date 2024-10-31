@@ -10,3 +10,10 @@ server_extended.R
 
 .Renviron.R
 .Rproj.user
+
+.DS_Store
+.RData
+.Rhistory
+
+todo.md
+
