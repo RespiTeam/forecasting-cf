@@ -10,7 +10,7 @@
 library(shiny)
 library(ggsurvfit)
 library(shinybusy)
-library(tidyverse)
+library(dplyr)
 library(future)
 library(promises)
 
@@ -43,6 +43,8 @@ exacerbations_ratios=tibble(
 
 data <- read.csv(file = "data/defaultData.csv")
 
+default_initial_pop <- data
+
 #Loading the simulation core functions
 source('r/sim_functions.R')
 source('r/micSim.r')
@@ -62,37 +64,35 @@ server <- auth0_server(function(input, output, session) {
     rv <- reactiveValues(data = transition_data)
     rv2 <- reactiveValues(data = newcases_ages_data)
     rv_exa <- reactiveValues(data = exacerbations_ratios)
-    initial_pop <- reactiveValues(data = data)
+    
+    # initial_pop <- reactiveValues(data = data)
+    
     scenario <- reactiveVal("")
     toYear <- reactiveVal("")
     times <- reactiveVal("")
     
-    #Events definition
-    observeEvent(input$rb_initial_population, {
-      
-       if (input$rb_initial_population=="canada") {
-         initial_pop$data = data
-       } else {
-         initial_pop$data = NULL
-       }
-      
-    })
+
+    # observeEvent(input$rb_initial_population, {
+    #   
+    #    if (input$rb_initial_population=="canada") {
+    #      initial_pop$data = data
+    #    } else {
+    #      initial_pop$data = NULL
+    #    }
+    #   
+    # })
     
-    observeEvent(input$btnInitialData, {
+    own_initial_pop <- reactive({
       
       # Check if the file is uploaded
       req(input$initial_data)
       
-      # Read the uploaded file using read.csv or another suitable function
+      # Read the uploaded file
       df <- read.csv(input$initial_data$datapath)
-  
+      
       validation = initial_data_validation(df)
       
-      if (validation$result) {
-        
-        initial_pop$data = df
-        
-      } else {
+      if (!validation$result) {
         
         showModal(modalDialog(
           title = "Error in initial data",
@@ -101,11 +101,43 @@ server <- auth0_server(function(input, output, session) {
           footer = NULL
         ))
         
+        df <- NULL
+        
       }
       
-    })
+      df
+      
+    }) 
     
-    observeEvent(input$runSim, {
+    
+    # observeEvent(input$btnInitialData, {
+    #   
+    #   # Check if the file is uploaded
+    #   req(input$initial_data)
+    #   
+    #   # Read the uploaded file using read.csv or another suitable function
+    #   df <- read.csv(input$initial_data$datapath)
+    # 
+    #   validation = initial_data_validation(df)
+    #   
+    #   if (validation$result) {
+    #     
+    #     initial_pop$data = df
+    #     
+    #   } else {
+    #     
+    #     showModal(modalDialog(
+    #       title = "Error in initial data",
+    #       validation$msg,
+    #       easyClose = TRUE,
+    #       footer = NULL
+    #     ))
+    #     
+    #   }
+    #   
+    # })
+    
+    simulatedData <- reactive({
       
       # Validations
       validated=TRUE
@@ -165,10 +197,10 @@ server <- auth0_server(function(input, output, session) {
           dataList$times=paste("From ",start_time," to ",end_time)
           
           return(dataList)
-        
+          
         }, seed=TRUE) %...>% (
-        function(result) {
-        dataList=result
+          function(result) {
+            dataList=result
             dataList$qty = dataList$qty |> mutate(
               group=case_when(group=="cftr"~"CFTR modulator", 
                               group=="non_cftr"~"Non-CFTR modulator",
@@ -200,8 +232,12 @@ server <- auth0_server(function(input, output, session) {
         
       }
       
-    })
+    }) |> 
+      bindEvent(input$runSim)
     
+    # observeEvent(input$runSim, {
+    #   
+    # })
     
     observeEvent({
       input$genotypeFilter

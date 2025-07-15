@@ -238,8 +238,9 @@ ui <- auth0_ui(
         card_header(tags$h5(span(
           "Load Initial Population", foot
         ))),
-        card_body(layout_columns(
-          col_widths = c(8, 4),
+        card_body(
+          # layout_columns(
+          # col_widths = c(8, 4),
           fileInput(
             inputId = "initial_data",
             label = NULL,
@@ -247,14 +248,16 @@ ui <- auth0_ui(
             buttonLabel = "Browse...",
             placeholder = "No file selected (.csv)",
             accept = c("csv", "comma-separated-values,plain", ".csv")
-          ),
-          actionButton(
-            inputId = "btnInitialData" ,
-            label = "Load",
-            icon = NULL,
-            width = NULL
           )
-        ))
+          # ,
+          # actionButton(
+          #   inputId = "btnInitialData" ,
+          #   label = "Load",
+          #   icon = NULL,
+          #   width = NULL
+          # )
+          # )
+        )
       ),
       
       # tags$h5("Assumptions"),
