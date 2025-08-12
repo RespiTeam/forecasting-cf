@@ -350,12 +350,6 @@ ui <- auth0_ui(
         " years intervals"
       ),
       
-      # selectInput(
-      #   inputId="genotypeFilter2",
-      #   label = "Genotype",
-      #   choices = c('All', 'Delta 508', 'Non-delta 508'),
-      # ),
-      # bslib::input_action_button("runSim", "Run Simulations"),
       actionButton("runSim", "Run Simulations"),
       tags$div(
         tags$img(src = "icons8-github-24.png"),

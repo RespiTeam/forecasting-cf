@@ -27,7 +27,7 @@ transition_data_default=tibble(
             "0","I (−2.599317)","I (−2.766158)","I (−2.0)",
             "I (−3.218876)"),
   Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.7, 0.9, 0),
-  Custom = rep(0,11)
+  Custom = rep(0.5,11)
 )
 
 newcases_ages_data=tibble(
@@ -58,7 +58,8 @@ server <- auth0_server(function(input, output, session) {
                          transition_data=transition_data_default,
                          age_proportions_newcases=newcases_ages_data,
                          exacerbations_ratios=exacerbations_ratios_default,
-                         initial_pop=inital_data_default)
+                         initial_pop=inital_data_default,
+                         forecasted_scenario=NULL, forecasted_times=NULL, toYear=NULL)
     
     
     observe({
@@ -98,7 +99,7 @@ server <- auth0_server(function(input, output, session) {
 
     })
     
-    simulatedData <- reactive({
+    observe({
       
       # Already validated
       # # Validations
@@ -175,11 +176,16 @@ server <- auth0_server(function(input, output, session) {
           )
           
           # Saving some data of the simulated scenario in the result
-          dataList$scenario = paste("Results for ",input$scenarios," scenario",sep="")
-          dataList$toYear = input$to
+          rv$forecasted_scenario = paste("Results for ",input$scenarios," scenario",sep="")
+          rv$forecasted_times=dataList$times
+          rv$toYear=input$to
+          
+          rv$barplot1_data=dataList$qty
+          rv$barplot2_data=dataList$qty
+          rv$hospiplot_data=dataList$qty
+          rv$survival_data = dataList$km
           
           remove_modal_gif()
-          return(dataList)
           
         }
       ) %...!% (
@@ -194,106 +200,6 @@ server <- auth0_server(function(input, output, session) {
     }) |> 
       bindEvent(input$runSim)
     
-    #Update reactive values after a simulation
-    observe({
-      
-      # print("Simulation results")
-      # print(simulatedData()$qty)
-      rv$barplot1_data=simulatedData()$qty
-      rv$barplot2_data=simulatedData()$qty
-      rv$hospiplot_data=simulatedData()$qty
-      rv$survival_data = simulatedData()$km
-      
-      print(simulatedData())
-      
-    })
-    
-    
-    observe({
-      
-      req(rv$barplot1_data)
-      
-      # Applying filters to rv$barplot1_data
-      if (input$genotypeFilter!="All") {
-        rv$barplot1_data = rv$barplot1_data |> filter(group==input$genotypeFilter)
-      }
-      
-      if (input$ageFilter_barplot1!="All") {
-        rv$barplot1_data = rv$barplot1_data |> filter(age_range==input$ageFilter_barplot1)
-      }
-      
-    }) 
-    
-    
-    observe({
-      
-      req(rv$barplot2_data)
-      
-      # Applying filters to rv$barplot2_data
-      if (input$ageFilter_barplot2!="All") {
-        rv$barplot2_data = rv$barplot2_data |> filter(age_range==input$ageFilter_barplot2)
-      }
-      
-      if (input$stateFilter!="All") {
-        rv$barplot2_data = rv$barplot2_data |> filter(state==input$stateFilter)
-      }
-      
-    }) 
-    
-    observe({
-      
-      req(rv$hospiplot_data)
-      
-      # Applying filters to databp3
-      if (input$ageFilter_hospi!="All") {
-        rv$hospiplot_data = rv$hospiplot_data |> filter(age_range==input$ageFilter_hospi)
-      }
-      
-    }) 
-    
-    # observeEvent({
-    #   input$genotypeFilter
-    #   input$ageFilter_barplot1
-    #   
-    #   input$ageFilter_barplot2
-    #   input$stateFilter
-    #   
-    #   input$ageFilter_hospi
-    #   }, {
-    #   
-    #   databp1 = simOutput$data$qty
-    #   databp2 = simOutput$data$qty
-    #   databp3 = simOutput$data$qty
-    #   # simOutputQty$data=applyFilters(datag, input$genotypeFilter, input$ageFilter, input$statusFilter)
-    #   
-    #   # Applying filters to databp1
-    #   if (input$genotypeFilter!="All") {
-    #     databp1 = databp1 |> filter(group==input$genotypeFilter)
-    #   }
-    #   
-    #   if (input$ageFilter_barplot1!="All") {
-    #     databp1 = databp1 |> filter(age_range==input$ageFilter_barplot1)
-    #   }
-    #   
-    #   # Applying filters to databp2
-    #   if (input$ageFilter_barplot2!="All") {
-    #     databp2 = databp2 |> filter(age_range==input$ageFilter_barplot2)
-    #   }
-    #   
-    #   if (input$stateFilter!="All") {
-    #     databp2 = databp2 |> filter(state==input$stateFilter)
-    #   }
-    #   
-    #   # Applying filters to databp3
-    #   if (input$ageFilter_hospi!="All") {
-    #     databp3 = databp3 |> filter(age_range==input$ageFilter_hospi)
-    #   }
-    #   
-    #   rv$barplot1_data=databp1
-    #   rv$barplot2_data=databp2
-    #   rv$hospiplot_data=databp3
-    #   
-    # })
     
     observeEvent(input$scenarios, {
       
@@ -326,14 +232,14 @@ server <- auth0_server(function(input, output, session) {
     observeEvent(input$transitions_table_cell_edit, {
       info <- input$transitions_table_cell_edit
       
-      if (as.numeric(info$value)<=1 & as.numeric(info$value)>=-1 ) {
+      if (as.numeric(info$value)<=1 & as.numeric(info$value)>=0 ) {
         # Update the reactive data with the new value
         rv$transition_data[info$row, info$col + 1] <- as.numeric(info$value)
       } else {
        
         showModal(modalDialog(
           title = "Invalid percentage",
-          "Reductions are expressed in ratios, they should be values between -1 and 1",
+          "Reductions are expressed in ratios, they should be values between 0 and 1",
           easyClose = TRUE,
           footer = NULL
         ))
@@ -471,22 +377,34 @@ server <- auth0_server(function(input, output, session) {
     
     output$selected_scenario <- renderText({
       
-      simulatedData()$scenario
+      validate(need(rv$forecasted_scenario, ""))
+      rv$forecasted_scenario
+      
     })
     
     output$times <- renderText({
       
-      simulatedData()$times
+      validate(need(rv$forecasted_times, "No scenario has been forecasted yet"))
+      rv$forecasted_times
     })
     
     output$barplot1 <- renderPlot({
       
       validate(need(rv$barplot1_data, "No scenario has been forecasted yet"))
-        
+      
         datag= rv$barplot1_data
         
         #start to plotting
         datag = datag |> filter(state != 'dead')
+        
+        # Applying filters
+        if (input$genotypeFilter!="All") {
+          datag <-datag |> filter(group==input$genotypeFilter)
+        }
+        
+        if (input$ageFilter_barplot1!="All") {
+          datag <- datag |> filter(age_range==input$ageFilter_barplot1)
+        }
         
         datag = datag |>
           group_by(milestone, state) |>
@@ -495,7 +413,8 @@ server <- auth0_server(function(input, output, session) {
             .groups="drop"
           )
         
-        p = ggplot(data= datag,aes(
+        datag |> 
+        ggplot(aes(
           x = as.factor(milestone),
           y = med,
           fill = state
@@ -510,8 +429,6 @@ server <- auth0_server(function(input, output, session) {
             axis.text.y = element_text(size = 14)
           )
         
-        p
-        
     })
     
     output$table2 = DT::renderDataTable({
@@ -519,6 +436,15 @@ server <- auth0_server(function(input, output, session) {
       validate(need(rv$barplot2_data, "No scenario has been forecasted yet"))
         
         datag= rv$barplot2_data
+        
+        # Applying filters
+        if (input$ageFilter_barplot2!="All") {
+          datag = datag |> filter(age_range==input$ageFilter_barplot2)
+        }
+        
+        if (input$stateFilter!="All") {
+          datag = datag |> filter(state==input$stateFilter)
+        }
         
           datag |> filter(state != 'dead') |>
             group_by(group,milestone) |>
@@ -552,7 +478,7 @@ server <- auth0_server(function(input, output, session) {
       
       validate(need(rv$survival_data, "No scenario has been forecasted yet"))
 
-      print(simulatedData()$toYear)
+      print(rv$toYear)
       print(rv$survival_data)
       
       #start to plotting
@@ -561,7 +487,7 @@ server <- auth0_server(function(input, output, session) {
         geom_step(direction="hv") +
         geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray")+
         theme_classic() +
-        labs(y=paste("Survival Probaility at ", simulatedData()$toYear,sep=""), x="Time (Age)")+
+        labs(y=paste("Survival Probaility at ", rv$toYear,sep=""), x="Time (Age)")+
         scale_colour_brewer(
           palette = "Set1",
           name=""
@@ -573,51 +499,6 @@ server <- auth0_server(function(input, output, session) {
           axis.text.y = element_text(size = 14)
         )+
         scale_x_continuous(limits = c(0, 80))
-      
-      # if (!is.null(rv$hospiplot_data)) {
-      #   
-      #   datag= rv$hospiplot_data
-      #   
-      #   #start to plotting
-      #   datag = datag |> filter(state != 'dead' & state!="transplant")
-      #   
-      #   datag = datag |> mutate(
-      #     hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*0.09,0),
-      #                    state=="moderate" & group=="Non-CFTR modulator"~round(med*0.9,0),
-      #                    state=="severe" & group=="Non-CFTR modulator"~round(med*2.2,0),
-      #                    state=="mild" & group=="CFTR modulator"~round(med*0.055,0),
-      #                    state=="moderate" & group=="CFTR modulator"~round(med*0.55,0),
-      #                    state=="severe" & group=="CFTR modulator"~round(med*1.35,0))
-      #   ) |>
-      #     group_by(milestone) |>
-      #     summarise(
-      #       med=sum(med),
-      #       hosp=sum(hosp),
-      #       .groups="drop"
-      #     ) |> mutate(
-      #       ratio_hosp=hosp/med
-      #     )
-      #   
-      #   p = ggplot(data= datag,aes(
-      #     x = milestone,
-      #     y = ratio_hosp
-      #   )) +
-      #     geom_line() +
-      #     geom_line( color="grey") +
-      #     geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
-      #     theme_classic()+
-      #     labs(y = "Ratio of exacerbations of CF population", x = "", fill = "") +
-      #     theme(legend.position = "bottom")+
-      #     theme(
-      #       legend.text = element_text(size = 14),  # Adjust the size as needed
-      #       axis.text.x = element_text(size = 14),
-      #       axis.text.y = element_text(size = 14)
-      #     )
-      #   
-      #   p
-      #   # print(p)
-      #   
-      # }
         
     })
     
@@ -631,6 +512,11 @@ server <- auth0_server(function(input, output, session) {
       
       #start to plotting
       datag = datag |> filter(state != 'dead' & state!="transplant")
+      
+      # Applying filters to databp3
+      if (input$ageFilter_hospi!="All") {
+        datag = datag |> filter(age_range==input$ageFilter_hospi)
+      }
       
       datag = datag |> mutate(
           hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
@@ -646,7 +532,8 @@ server <- auth0_server(function(input, output, session) {
           .groups="drop"
         )
       
-      p = ggplot(data= datag,aes(
+      datag |> 
+      ggplot(aes(
         x = as.factor(milestone),
         y = hosp,
         fill = state
@@ -660,9 +547,6 @@ server <- auth0_server(function(input, output, session) {
           axis.text.x = element_text(size = 14),
           axis.text.y = element_text(size = 14)
         )
-      
-      p
-      # print(p)
         
     })
 

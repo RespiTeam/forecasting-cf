@@ -13,7 +13,7 @@ transitionRatesTab <- function(id) {
                    observed before CFTR modulators. The pessimistic transition probabilities are based on those estimated in Stanojevic et al., 2021 
                    using conservative estimates of the effectiveness of CFTR modulators. The optimistic column applies the real-world effectiveness 
                    reported in published studies. Users may apply their own custom changes in the transition rates.  For example if the rate of 
-                   transplant is reduced by 90% from the pessimistic scenario, then 90 can be entered into the custom % box.",
+                   transplant is reduced by 90% from the pessimistic scenario, then 0.90 can be entered into the custom column",
             ),
       )
     ),
