@@ -73,56 +73,50 @@ outputTab <- function(id) {
           theme = "text-green",
           full_screen = FALSE,
         ),
-        layout_columns(
-          col_widths = c(6, 6),
-          card(
-            fill = TRUE,
-            full_screen = TRUE,
-            card_header(
-              "Disease Severity",
-              barplot1Filter,
-            ),
-            card_body(
-              plotOutput(outputId = "barplot1"),
-            )
+        card(
+          fill = FALSE,
+          full_screen = TRUE,
+          card_header(
+            "Disease Severity",
+            barplot1Filter,
           ),
-          card(
-            fill = TRUE,
-            full_screen = TRUE,
-            card_header(
-              "Total Population",
-              barplot2Filter,
-            ),
-            card_body(
-              #plotOutput(outputId = "barplot2"),
-              # gt_output("table2") 
-              dataTableOutput("table2")
-            )
+          card_body(
+            plotOutput(outputId = "barplot1"),
           )
         ),
-        layout_columns(
-          col_widths = c(6, 6),
-          card(
-            fill = TRUE,
-            full_screen = TRUE,
-            card_header(
-              "Survival Curves",
-            ),
-            card_body(
-              plotOutput(outputId = "kmPlot")
-            )
+        card(
+          fill = FALSE,
+          full_screen = TRUE,
+          card_header(
+            "Total Population",
+            barplot2Filter,
           ),
-          card(
-            fill = TRUE,
-            full_screen = TRUE,
-            card_header(
-              "Pulmonary Exacerbations",
-              hospiFilter,
-            ),
-            card_body(
-              plotOutput(outputId = "hospPlot")
-            )
+          card_body(
+            #plotOutput(outputId = "barplot2"),
+            # gt_output("table2") 
+            dataTableOutput("table2")
+          )
+        ),
+        card(
+          fill = FALSE,
+          full_screen = TRUE,
+          card_header(
+            "Survival Curves",
           ),
+          card_body(
+            plotOutput(outputId = "kmPlot")
+          )
+        ),
+        card(
+          fill = FALSE,
+          full_screen = TRUE,
+          card_header(
+            "Pulmonary Exacerbations",
+            hospiFilter,
+          ),
+          card_body(
+            plotOutput(outputId = "hospPlot")
+          )
         )
     ) # End of tags list
     # selectInput(

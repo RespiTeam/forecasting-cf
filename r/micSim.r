@@ -219,9 +219,10 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
 
     # How many years (along age scale) remain until `maxAge'? 
     ranMaxAge <- (maxAge-0.01)-ageInYears     
-    # How many years (along cal. time scale) remain until simulation end?        
+    # How many years (along cal. time scale) remain until simulation end?
     ranMaxYear <-  (simStopInDays - calTime)/365.25  
-    # Identify the time range that should be considered. 
+    
+    # Identify the time range in years that should be considered. 
     ran <- min(ranMaxYear,ranMaxAge)   
     #cat('Ran: ',ran,' - ranMaxAge: ',ranMaxAge,' - ranMaxYear: ',ranMaxYear,'\n')
     #ranAge <- c(ageInYears,ageInYears+ranMaxAge) # age range in years
@@ -290,6 +291,7 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       }                                                 
       ranAccuracyInDays <- (0:(trunc(ran*365.25)+0.99))/365.25
       detE <- indRateFctDET(ranAccuracyInDays)
+      
       daysToTrInYears <- (which(detE == Inf)[1] - 1)/365.25
       if (Inf %in% detE) {
         timeToNext <- daysToTrInYears
@@ -303,7 +305,7 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
           durIn <- durSinceLastCovCh/365.25+x
           # res <- eval(do.call(tr, args=list(age=ageIn,calTime= calIn,duration=durIn)))   
           res<-eval(transitionFuns[[tr]](age=ageIn,calTime= calIn,duration=durIn))
-          
+
           if(TRUE %in% (res<0))
             stop('I have found negative rate value/s for transition: ',tr,'\n
                  This is implausible. Please check this. Simulation has been stopped.\n')
@@ -311,7 +313,7 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
           #cat('\n---\n')
           return(res)
         }
-        if(sum(indRateFct(0:ran))==0){ # Rate funtion contains only zeros.
+        if(sum(indRateFct(0:ran))==0){ # Rate function contains only zeros.
           intHaz <- 0
         } else {        
           # Integrated hazard at max. value
@@ -344,7 +346,7 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       nextEventMatrix[i,1] <- destState    
       nextEventMatrix[i,2] <- (timeToNext+lagToWaitingTime)*365.25    # time to next event in days
     }
-    #print(nextEventMatrix)
+    
     nE <- nextEventMatrix[which(nextEventMatrix[,2]==min(as.numeric(nextEventMatrix[,2]))),,drop=F]
     if(dim(nE)[1]>1)
       nE <- nE[1,,drop=F]
@@ -504,7 +506,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
         } 
       }
       res <- getNextStep(c(indS[c('ID','nextState')], age, t.clock))
-      #print(res)
     }
     #cat('\n-----------\n')
   }
