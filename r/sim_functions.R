@@ -7,6 +7,9 @@ library(lubridate)
 library(ggplot2)
 library(scales)
 
+
+source('r/transition_functions.r')
+
 # Create immigrate population function.
 # new_subjects: The total number of new diagnosed subjects (immigrants) per year
 build_immigr_pop<- function(start_date=as.Date("2020-01-01"), end_date=as.Date("2021-12-31"), new_subjects=100, lastID, inmigr_probs) {
@@ -264,7 +267,8 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     # Constructing a new initial population for cftr group
     initPop_cftr=initData_cftr %>% 
       mutate(
-        birthDate = as.double(gsub(pattern = "-", replacement = "", birthDate)), 
+        birthDate = as.double(gsub(pattern = "-", replacement = "", birthDate)),
+        cftrStart = as.double(gsub(pattern = "-", replacement = "", cftrStart))
       ) %>% filter(initState!='dead' & initState!='loss')
     
     # Converting from tibble to dataframe
@@ -276,7 +280,8 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     # Constructing a new initial population for non_cftr group
     initPop_0cftr=initData_0cftr %>% 
       mutate(
-        birthDate = gsub(pattern = "-", replacement = "", birthDate), 
+        birthDate = gsub(pattern = "-", replacement = "", birthDate),
+        cftrStart = NA
       ) %>% filter(initState!='dead' & initState!='loss')
     
     # Converting from tibble to dataframe
@@ -300,12 +305,18 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     # Running simulation for patients without cftr mutation
     transitions_0cftr=cf_simulation(start_date, end_date, initPop=initPop_0cftr, immigrPop=inmigrPop_0cftr,'0cftr',transFuns)
     
+    print('Bfore cftr sim')
+    
     ## Running simulation for patients with cftr mutation
     transitions_cftr=cf_simulation(start_date, end_date, initPop=initPop_cftr, immigrPop=inmigrPop_cftr,'cftr',transFuns)
+    
+    print('Bfore join_into_longi')
     
     # Joining the datasets
     popcftr_long=Join_into_Longi(initPop_cftr,transitions_cftr,inmigrPop_cftr,start_date)
     pop0cftr_long=Join_into_Longi(initPop_0cftr,transitions_0cftr,inmigrPop_0cftr,start_date)
+    
+    print('Bfore formattingForSummary1')
     
     # Formatting and merging with initial datasets for number of patients
     endData = formattingForSummary1(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,period_length,start_date,end_date,i)
@@ -313,6 +324,8 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     ## joining the result of this iteration with the previous
     simResults = bind_rows(simResults,
                            endData)
+    
+    print('Bfore formattingForSummary2')
     
     # Formatting and merging with initial datasets for survival analysis
     endData = formattingForSummary2(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,i)
@@ -514,8 +527,6 @@ initial_data_validation <- function(df) {
   )
   
 }
-
-
 
 formattingForSummary1 <- function(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,period_length,start_date,end_date,i) {
   

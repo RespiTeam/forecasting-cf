@@ -300,7 +300,7 @@ ui <- auth0_ui(
               trigger = list("From:", bs_icon("info-circle")),
               "To change start date you need to load initial data"
             ),
-            value = 2021,
+            value = 2024,
             step = 1,
           )
         ),

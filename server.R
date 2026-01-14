@@ -41,7 +41,7 @@ exacerbations_ratios_default=tibble(
   non_cftr=c(0.09,0.9,2.2)
 )
 
-inital_data_default <- read.csv(file = "data/defaultData.csv")
+inital_data_default <- read.csv(file = "data/initPop.csv")
 
 #Loading the simulation core functions
 source('r/sim_functions.R')

@@ -119,4 +119,5 @@ result
 output
 
 inp = IN[1,]
-
+ranAccuracyInDays <- (0:(trunc(2*365.25)+0.99))/365.25
+cftrTime <- 1
