@@ -13,6 +13,7 @@ library(shinybusy)
 library(dplyr)
 library(future)
 library(promises)
+library(RColorBrewer)
 
 transition_data_default=tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
@@ -32,13 +33,15 @@ transition_data_default=tibble(
 
 newcases_ages_data=tibble(
   age_range=c('0-1','1-2','2-18','18-40'), 
-  prob=c(0.672,0.103,0.155,0.07)
+  # prob=c(0.672,0.103,0.155,0.07)
+  prob=c(0.677,0.062,0.1405,0.1205)
 )
 
 exacerbations_ratios_default=tibble(
   state=c('mild','moderate','severe'),
-  cftr=c(0.055,0.55,1.35),
-  non_cftr=c(0.09,0.9,2.2)
+  # cftr=c(0.055,0.55,1.35),
+  cftr=c(0.12,0.29,0.49),
+  non_cftr=c(0.17,0.73,1.12)
 )
 
 inital_data_default <- read.csv(file = "data/initPop.csv")
@@ -50,16 +53,31 @@ source('r/auxFctMicSim.r')
 
 plan(multisession)
 
+# Creating gray scale palette
+grey_palette = brewer.pal(9, 'Greys')
+
+# Creating color palette
+r=c(2, 17, 111, 253)
+g=c(75, 129, 166, 127)
+b=c(112, 153, 179, 228)
+
+color_palette = rgb(r,g,b, maxColorValue = 255)
+
 # Define server logic required to draw a histogram
 server <- auth0_server(function(input, output, session) {
   
     #Defining reactive values
-    rv <- reactiveValues(barplot1_data=NULL, barplot2_data=NULL, hospiplot_data=NULL, survival_data=NULL, erDF508=rep(0,10),
+    rv <- reactiveValues(qtyData=NULL, survival_data=NULL, erDF508=rep(0,10),
                          transition_data=transition_data_default,
                          age_proportions_newcases=newcases_ages_data,
                          exacerbations_ratios=exacerbations_ratios_default,
                          initial_pop=inital_data_default,
                          forecasted_scenario=NULL, forecasted_times=NULL, toYear=NULL)
+    
+    rvSeverity <- reactiveValues(data=NULL)
+    rvPopulation <- reactiveValues(data=NULL)
+    rvSurvival <- reactiveValues(data=NULL)
+    rvExacerbations <- reactiveValues(data=NULL)
     
     
     observe({
@@ -99,35 +117,9 @@ server <- auth0_server(function(input, output, session) {
 
     })
     
+    # Running simulation  ------
+    
     observe({
-      
-      # Already validated
-      # # Validations
-      # validated=TRUE
-      # sum_prop=sum(rv$age_proportions_newcases[, 2] |> pull())
-      # 
-      # # Perform validation
-      # if(sum_prop!=1) {
-      #   validated=FALSE
-      #   showModal(modalDialog(
-      #     title = "Error in input data",
-      #     "The sum of proportions for new cases should be 1",
-      #     easyClose = TRUE,
-      #     footer = NULL
-      #   ))
-      # }
-      # 
-      # if(is.null(rv$initial_pop)) {
-      #   validated=FALSE
-      #   showModal(modalDialog(
-      #     title = "Error in input data",
-      #     "You haven't uploaded the initial population dataset",
-      #     easyClose = TRUE,
-      #     footer = NULL
-      #   ))
-      # }
-      # 
-      # if (validated) {
         
       show_modal_gif(
         #https://media.giphy.com/media/7d8tndK1hVRNYtOWTJ/giphy.gif?cid=ecf05e47jbrq1m0cnl5zswwwanw9x1820sd19cj67mnhgih0&ep=v1_gifs_search&rid=giphy.gif&ct=g
@@ -163,15 +155,17 @@ server <- auth0_server(function(input, output, session) {
       }, seed=TRUE) %...>% (
         function(result) {
           dataList=result
-          dataList$qty = dataList$qty |> mutate(
-            group=case_when(group=="cftr"~"CFTR modulator", 
-                            group=="non_cftr"~"Non-CFTR modulator",
+          
+          # Preprocessing simulation results
+          dataList$qty <- dataList$qty |> mutate(
+            group=case_when(group=="cftr"~"Modulator", 
+                            group=="non_cftr"~"Non-modulator",
                             .default = NA)
           )
           
-          dataList$km = dataList$km |> mutate(
-            group=case_when(group=="cftr"~"CFTR modulator", 
-                            group=="non_cftr"~"Non-CFTR modulator",
+          dataList$km <- dataList$km |> mutate(
+            group=case_when(group=="cftr"~"Modulator", 
+                            group=="non_cftr"~"Non-modulator",
                             .default = NA)
           )
           
@@ -180,9 +174,19 @@ server <- auth0_server(function(input, output, session) {
           rv$forecasted_times=dataList$times
           rv$toYear=input$to
           
-          rv$barplot1_data=dataList$qty
-          rv$barplot2_data=dataList$qty
-          rv$hospiplot_data=dataList$qty
+          # rv$qtyData=dataList$qty
+          ratios_tb <-  rv$exacerbations_ratios
+            
+          rv$qtyData <- dataList$qty |> 
+            mutate(
+              exac=case_when(state=="mild" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
+                             state=="moderate" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
+                             state=="severe" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
+                             state=="mild" & group=="Modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
+                             state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
+                             state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
+            )
+          
           rv$survival_data = dataList$km
           
           remove_modal_gif()
@@ -317,7 +321,7 @@ server <- auth0_server(function(input, output, session) {
     output$exacerbations_table=renderDT(
       rv$exacerbations_ratios, 
       editable = list(target = "cell", disable = list(columns = c(0))),
-      colnames = c("State", "CTFR", "Non-CFTR"),
+      colnames = c("State", "Modulator", "Non-Modulator"),
       rownames = FALSE,
       selection = 'none',
       options = list(
@@ -352,7 +356,7 @@ server <- auth0_server(function(input, output, session) {
         output$exacerbations_table=renderDT(
           rv$exacerbations_ratios, 
           editable = list(target = "cell", disable = list(columns = c(0))),
-          colnames = c("State", "CTFR", "Non-CFTR"),
+          colnames = c("State", "Modulator", "Non-modulator"),
           rownames = FALSE,
           selection = 'none',
           options = list(
@@ -369,11 +373,14 @@ server <- auth0_server(function(input, output, session) {
     observeEvent(input$btnDefaultExaRatios, {
       
       rv$exacerbations_ratios=exacerbations_ratios
-      print('se ejecuta')
       
     })
     
-    # OUTPUT PLOTS
+    # Modules server -----
+    
+    outputServer("simResults", rv, color_palette)
+    
+    # OUTPUT PLOTS --------
     
     output$selected_scenario <- renderText({
       
@@ -388,167 +395,81 @@ server <- auth0_server(function(input, output, session) {
       rv$forecasted_times
     })
     
-    output$barplot1 <- renderPlot({
-      
-      validate(need(rv$barplot1_data, "No scenario has been forecasted yet"))
-      
-        datag= rv$barplot1_data
-        
-        #start to plotting
-        datag = datag |> filter(state != 'dead')
-        
-        # Applying filters
-        if (input$genotypeFilter!="All") {
-          datag <-datag |> filter(group==input$genotypeFilter)
-        }
-        
-        if (input$ageFilter_barplot1!="All") {
-          datag <- datag |> filter(age_range==input$ageFilter_barplot1)
-        }
-        
-        datag = datag |>
-          group_by(milestone, state) |>
-          summarise(
-            med=sum(med),
-            .groups="drop"
-          )
-        
-        datag |> 
-        ggplot(aes(
-          x = as.factor(milestone),
-          y = med,
-          fill = state
-        )) +
-          geom_bar(position = "stack", stat = "identity") +
-          theme_classic() +
-          labs(y = "Number of patients", x = "", fill = "") +
-          theme(legend.position = "bottom")+
-          theme(
-            legend.text = element_text(size = 14),  # Adjust the size as needed
-            axis.text.x = element_text(size = 14),
-            axis.text.y = element_text(size = 14)
-          )
-        
-    })
-    
-    output$table2 = DT::renderDataTable({
-      
-      validate(need(rv$barplot2_data, "No scenario has been forecasted yet"))
-        
-        datag= rv$barplot2_data
-        
-        # Applying filters
-        if (input$ageFilter_barplot2!="All") {
-          datag = datag |> filter(age_range==input$ageFilter_barplot2)
-        }
-        
-        if (input$stateFilter!="All") {
-          datag = datag |> filter(state==input$stateFilter)
-        }
-        
-          datag |> filter(state != 'dead') |>
-            group_by(group,milestone) |>
-            summarise(
-              subj=sum(med),
-              .groups = "drop"
-            ) |> arrange(milestone, group) |> select(
-          milestone,
-          group,
-          Patients=subj,
-        ) |> mutate (
-          group=case_when(group=="CFTR modulator"~"CFTR", 
-                          group=="Non-CFTR modulator"~"Non_CFTR",
-                          )
-        ) |> pivot_wider(names_from = group, values_from = Patients) |> mutate(
-          Total=CFTR+Non_CFTR
-        )
-      
-      }, 
-      selection = 'none',
-      options = list(
-        dom = 'pt',
-        pageLength = 6
-      ),
-      rownames = FALSE,
-      server = FALSE
-    )
-    
     
     output$kmPlot <- renderPlot({
       
       validate(need(rv$survival_data, "No scenario has been forecasted yet"))
-
-      print(rv$toYear)
-      print(rv$survival_data)
       
       #start to plotting
       rv$survival_data |>
         ggplot(aes(x=time, y=survival, colour = group)) +
-        geom_step(direction="hv") +
-        geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray")+
+        geom_step(direction="hv", linewidth = 1.5) +
+        geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray", linewidth = 1)+
         theme_classic() +
         labs(y=paste("Survival Probaility at ", rv$toYear,sep=""), x="Time (Age)")+
-        scale_colour_brewer(
-          palette = "Set1",
-          name=""
-        )+
         theme(legend.position="bottom")+
         theme(
           legend.text = element_text(size = 14),  # Adjust the size as needed
           axis.text.x = element_text(size = 14),
           axis.text.y = element_text(size = 14)
         )+
-        scale_x_continuous(limits = c(0, 80))
+        scale_x_continuous(breaks = seq(0, 80, by = 5))+
+        scale_color_manual(values=color_palette[4:3])
         
     })
     
-    output$hospPlot <- renderPlot({
-      
-      validate(need(rv$hospiplot_data, "No scenario has been forecasted yet"))
-        
-      datag= rv$hospiplot_data
-      
-      ratios_tb = rv$exacerbations_ratios
-      
-      #start to plotting
-      datag = datag |> filter(state != 'dead' & state!="transplant")
-      
-      # Applying filters to databp3
-      if (input$ageFilter_hospi!="All") {
-        datag = datag |> filter(age_range==input$ageFilter_hospi)
-      }
-      
-      datag = datag |> mutate(
-          hosp=case_when(state=="mild" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
-                         state=="moderate" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
-                         state=="severe" & group=="Non-CFTR modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
-                         state=="mild" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
-                         state=="moderate" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
-                         state=="severe" & group=="CFTR modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
-        ) |>
-        group_by(milestone, state) |>
-        summarise(
-          hosp=sum(hosp),
-          .groups="drop"
-        )
-      
-      datag |> 
-      ggplot(aes(
-        x = as.factor(milestone),
-        y = hosp,
-        fill = state
-      )) +
-        geom_bar(position = "stack", stat = "identity") +
-        theme_classic() +
-        labs(y = "Number of exacerbations", x = "", fill = "") +
-        theme(legend.position = "bottom")+
-        theme(
-          legend.text = element_text(size = 14),  # Adjust the size as needed
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14)
-        )
-        
-    })
+    # output$hospPlot <- renderPlot({
+    #   
+    #   validate(need(rv$hospiplot_data, "No scenario has been forecasted yet"))
+    #     
+    #   datag= rv$hospiplot_data
+    #   
+    #   ratios_tb = rv$exacerbations_ratios
+    #   
+    #   #start to plotting
+    #   datag = datag |> filter(state != 'dead' & state!="transplant")
+    #   
+    #   # Applying filters to databp3
+    #   if (input$ageFilter_hospi!="All") {
+    #     datag = datag |> filter(age_range==input$ageFilter_hospi)
+    #   }
+    #   
+    #   datag = datag |> mutate(
+    #       hosp=case_when(state=="mild" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
+    #                      state=="moderate" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
+    #                      state=="severe" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
+    #                      state=="mild" & group=="Modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
+    #                      state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
+    #                      state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
+    #     ) |>
+    #     group_by(milestone, state) |>
+    #     summarise(
+    #       hosp=sum(hosp),
+    #       .groups="drop"
+    #     )
+    #   
+    #   datag |> 
+    #   ggplot(aes(
+    #     x = as.factor(milestone),
+    #     y = hosp,
+    #     fill = state
+    #   )) +
+    #     geom_bar(position = "stack", stat = "identity") +
+    #     theme_classic() +
+    #     labs(y = "Number of exacerbations", x = "", fill = "") +
+    #     theme(legend.position = "bottom")+
+    #     theme(
+    #       legend.text = element_text(size = 14),  # Adjust the size as needed
+    #       axis.text.x = element_text(size = 14),
+    #       axis.text.y = element_text(size = 14)
+    #     )+
+    #     scale_fill_manual(values=color_palette[3:1])+
+    #     geom_text(aes(label = round(hosp,0)),
+    #               position = position_stack(vjust = 0.5),  # centers each label
+    #               color = "white",
+    #               size = 4)
+    #     
+    # })
 
 }
 )

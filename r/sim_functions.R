@@ -256,11 +256,13 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
   
   simResults=tibble()
   simResults2=tibble()
+  deadDataCftr=tibble()
+  deadDataNonCftr=tibble()
   
   for (i in 1:nIter) {
     
-    initData_cftr = data |> filter(genotype=="cftr") |> select(!genotype)
-    initData_0cftr = data |> filter(genotype=="non_cftr") |> select(!genotype)
+    initData_cftr = data |> filter(cftr=="cftr") |> select(!cftr)
+    initData_0cftr = data |> filter(cftr=="non_cftr") |> select(!cftr)
     
     print(paste('starting simulation',i,sep=' '))
     
@@ -305,27 +307,81 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     # Running simulation for patients without cftr mutation
     transitions_0cftr=cf_simulation(start_date, end_date, initPop=initPop_0cftr, immigrPop=inmigrPop_0cftr,'0cftr',transFuns)
     
-    print('Bfore cftr sim')
-    
     ## Running simulation for patients with cftr mutation
     transitions_cftr=cf_simulation(start_date, end_date, initPop=initPop_cftr, immigrPop=inmigrPop_cftr,'cftr',transFuns)
-    
-    print('Bfore join_into_longi')
     
     # Joining the datasets
     popcftr_long=Join_into_Longi(initPop_cftr,transitions_cftr,inmigrPop_cftr,start_date)
     pop0cftr_long=Join_into_Longi(initPop_0cftr,transitions_0cftr,inmigrPop_0cftr,start_date)
     
-    print('Bfore formattingForSummary1')
+    print("cftr Deaths")
+    deadData <- popcftr_long |> 
+      filter(initState=='dead')
     
+    deadData <- popcftr_long |> 
+        filter(ID %in% deadData$ID) |> 
+        arrange(ID, current_date) |> 
+        group_by(ID, current_date) |>
+        slice_tail(n = 2) |> 
+        ungroup() |> 
+        select(!current_year & !source)
+    
+    deadData <- deadData |> 
+      filter(initState=='dead') |> 
+      left_join(
+        deadData |> 
+          filter(initState!='dead') |> 
+          select(ID, lastState=initState),
+        by='ID'
+      )
+    
+    deadData <- deadData |>
+      summarise(
+        dead = n_distinct(ID),
+        .by = c(initState, lastState)
+      ) |> 
+      mutate(ite = i)
+    
+    deadDataCftr <- bind_rows(deadDataCftr, deadData)
+    
+    # Now non-cftr group
+    print("Non-cftr Deaths")
+    
+    deadData2 <- pop0cftr_long |> 
+      filter(initState=='dead')
+    
+    deadData2 <- pop0cftr_long |> 
+      filter(ID %in% deadData2$ID) |> 
+      arrange(ID, current_date) |> 
+      group_by(ID, current_date) |>
+      slice_tail(n = 2) |> 
+      ungroup() |> 
+      select(!current_year & !source)
+    
+    deadData2 <- deadData2 |> 
+      filter(initState=='dead') |> 
+      left_join(
+        deadData2 |> 
+          filter(initState!='dead') |> 
+          select(ID, lastState=initState),
+        by='ID'
+      )
+    
+    deadData2 <- deadData2 |>
+      summarise(
+        dead = n_distinct(ID),
+        .by = c(initState, lastState)
+      ) |> 
+      mutate(ite = i)
+    
+    deadDataNonCftr <- bind_rows(deadDataNonCftr, deadData2)
+      
     # Formatting and merging with initial datasets for number of patients
     endData = formattingForSummary1(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,period_length,start_date,end_date,i)
     
     ## joining the result of this iteration with the previous
     simResults = bind_rows(simResults,
                            endData)
-    
-    print('Bfore formattingForSummary2')
     
     # Formatting and merging with initial datasets for survival analysis
     endData = formattingForSummary2(initData_cftr,popcftr_long,initData_0cftr,pop0cftr_long,i)
@@ -335,6 +391,26 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
                            endData)
     
   }
+  
+  print("States before dead CFTR")
+  print(
+    deadDataCftr |> 
+      summarise(
+        dead=median(dead),
+        .by=lastState
+      ) |> 
+      arrange(lastState)
+    )
+  
+  print("States before dead non-CFTR")
+  print(
+    deadDataNonCftr |> 
+      summarise(
+        dead=median(dead),
+        .by=lastState
+      ) |> 
+      arrange(lastState)
+    )
   
   # Building summarize results
   summarizeResults=buildingSummarizeData(simResults, start_date)
@@ -446,6 +522,43 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
       status=new_state
     )
   
+  print("Summarize deaths by year")
+  print(
+    kmData |>
+      filter(status==1) |>
+      mutate(
+        year = year(current_date)
+      ) |>
+      summarise(
+        deaths = sum(status),
+        .by = c(iteration, year, group)
+      ) |> 
+      summarise(
+        deaths = median(deaths),
+        .by = c(year, group)
+      ) |> 
+      arrange(year, group)
+    )
+  
+  deathsData <- kmData |>
+    filter(status==1) |>
+    mutate(
+      year = year(current_date)
+    )
+  
+  simYears <- unique(deathsData$year)
+  
+  deathsData |> 
+    filter(year == simYears[1]) |> 
+    ggplot(aes(x=exit_time))+
+    geom_histogram(aes(y=..density..), alpha=0.5)+
+    theme_classic()+
+    facet_grid(group ~ .)+
+    labs(x="Exit time (age)", y="NUmber of deaths")
+  
+  ggsave("outputs/hist_deaths.png")
+  
+  
   for (i in unique(simResults2$iteration)) {
     
     sp <- summary(survfit2(Surv(enter_time, exit_time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
@@ -474,7 +587,7 @@ initial_data_validation <- function(df) {
   valid=TRUE
   msg=""
   #columns names 
-  if (sum(names(df) %in% c("ID","birthDate","genotype","initState"))!=4) {
+  if (sum(names(df) %in% c("ID","birthDate","cftr","initState"))!=4) {
     valid=FALSE
     msg="Error in columns names"
     return(
@@ -482,11 +595,11 @@ initial_data_validation <- function(df) {
     )
   }
   
-  #genotypes
-  analyzed_values=as.data.frame(table(df |> select(genotype) |> pull())) |> select(Var1) |> pull()
+  #cftrs
+  analyzed_values=as.data.frame(table(df |> select(cftr) |> pull())) |> select(Var1) |> pull()
   if (sum(analyzed_values == c("cftr","non_cftr"))!=2) {
     valid=FALSE
-    msg="Error in genotype values"
+    msg="Error in cftr values"
     return(
       list(result=valid, msg=msg)
     )
@@ -503,7 +616,7 @@ initial_data_validation <- function(df) {
   }
   
   # validating IDs
-  analyzed_group = df |> filter(genotype=="cftr") |> select(ID) |> pull()
+  analyzed_group = df |> filter(cftr=="cftr") |> select(ID) |> pull()
   if (length(unique(analyzed_group))!=length((analyzed_group))) {
     valid=FALSE
     msg="There are duplicate IDs in CFTR modulator group"
@@ -513,10 +626,10 @@ initial_data_validation <- function(df) {
   }
   
   # validating IDs
-  analyzed_group = df |> filter(genotype=="non_cftr") |> select(ID) |> pull()
+  analyzed_group = df |> filter(cftr=="non_cftr") |> select(ID) |> pull()
   if (length(unique(analyzed_group))!=length((analyzed_group))) {
     valid=FALSE
-    msg="There are duplicate IDs in non-CFTR modulator group"
+    msg="There are duplicate IDs in non modulator group"
     return(
       list(result=valid, msg=msg)
     )

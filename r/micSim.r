@@ -12,15 +12,13 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fixInitStates = c(), 
-                   varInitStates=c(), initStatesProb=c(), maxAge=99, simHorizon, fertTr=c(), monthSchoolEnrol=c(), transitionFuns) {
+                   varInitStates=c(), initStatesProb=c(), maxAge=92, simHorizon, fertTr=c(), monthSchoolEnrol=c(), transitionFuns) {
   
   # --------------------------------------------------------------------------------------------------------------------
   # --------------------------------------------------------------------------------------------------------------------
   # A. CHECK INPUT FOR CONSISTENCY
   # --------------------------------------------------------------------------------------------------------------------
   # --------------------------------------------------------------------------------------------------------------------
-  
-  print("Starting A")
   
   if(is.null(initPop))
     stop('No starting population has been defined.')
@@ -92,8 +90,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
     schoolEnrol <- TRUE 
   }
   
-  print("Finished A")
-  
   # --------------------------------------------------------------------------------------------------------------------
   # --------------------------------------------------------------------------------------------------------------------
   # B. DEFINITION OF GLOBAL PARAMETERS
@@ -115,8 +111,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
   if(length(fertTr)>0){
     mothers <- matrix(NA,ncol=2,nrow=0) # 'motherID', 'childID' 
   }
-  
-  print("Finished B")
   
   # ----------------------------------------------------------------------------------------------------------------------
   # ----------------------------------------------------------------------------------------------------------------------
@@ -197,8 +191,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
     enrol <- all( c(any('no' %in% strsplit(currState,'/')[[1]]), any('low' %in% strsplit(destState,'/')[[1]])) ) 
     return(enrol)
   }
-  
-  print("Finished C")
   
   # ----------------------------------------------------------------------------------------------------------------------
   # ----------------------------------------------------------------------------------------------------------------------
@@ -431,8 +423,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
   }
   init <- apply(IN, 1, getNextStep)
   
-  print("After apply getNextStep -> IN")
-  
   # If immigrants enter the population, compute next events for them.
   if(!is.null(immigrPop)){
     IM <- data.frame(ID=immigrPop[,'ID'], currState=immigrPop[,'immigrInitState'], age=getAgeInDays(immigrPop[,'immigrDate'],immigrPop[,'birthDate']),
@@ -446,7 +436,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       }
       stop("Error: Not yet born at immigration date.") 
     }
-    print("immigrPop validation 1")
     
     # Check whether all migrants migrate after simulation starting date
     if(TRUE %in% (immigrPop$immigrDate<simHorizon[1])){
@@ -457,7 +446,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       }
       stop("Error: Migrate before simulation starting date.") 
     }
-    print("immigrPop validation 2")
     
     # Check whether all migrants migrate before simulation stopping date  
     if(TRUE %in% (immigrPop$immigrDate>simHorizon[2])){
@@ -468,7 +456,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       }      
       stop("Error: Migrate after simulation ending date.") 
     }
-    print("immigrPop validation 3")
     
     # Check whether all migrants are younger than maxAge when they migrate  
     ageIm <- (getInDays(immigrPop$immigrDate)-getInDays(immigrPop$birthDate))/365.25 # age at immigration in years
@@ -480,7 +467,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
       }  
       stop("Error: Migrants in the input data are older than `maxAge'.") 
     }
-    print("immigrPop validation 4")
     
     immigrInitPop <- immigrPop[,c('ID','birthDate','immigrInitState')]
     colnames(immigrInitPop)[3] <- 'initState'
@@ -491,7 +477,6 @@ micSim <- function(initPop, immigrPop=NULL, transitionMatrix, absStates=NULL, fi
     initPop <- rbind(initPop, immigrInitPop)
     imit <- apply(IM, 1, getNextStep, isIMInitEvent=T)
     
-    print("After apply getNextStep -> IM")
   } 
   if(length(fertTr)>0){
     fertTrExpanded <- buildFertTrExpanded()

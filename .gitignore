@@ -5,6 +5,7 @@ data/
 rsconnect/
 renv/
 Testing/
+outputs/
 
 server_extended.R
 

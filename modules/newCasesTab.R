@@ -22,7 +22,7 @@ newCasesTab <- function(id) {
           numericInput(
             inputId = "newCases",
             label = NULL,
-            value = 87,
+            value = 142,
             min = 0,
             max = 150,
             step = 1,
@@ -32,11 +32,11 @@ newCasesTab <- function(id) {
         DTOutput("newcases_groups"),
         layout_columns(
           col_widths = c(10, 2),
-          "% of population eligible for CFTR modulator: ",
+          "% of population on modulator: ",
           numericInput(
             inputId = "prop508",
             label = NULL,
-            value = 97.6,
+            value = 64.4,
             step = 0.1,
             min = 0,
             max = 100,
@@ -46,28 +46,12 @@ newCasesTab <- function(id) {
       ))
     )
   )), # fluidRow(
-  #   column(12,
-  #          radioButtons("rb_new_cases",NULL,
-  #                       choiceNames = list(
-  #                         HTML("<span class='py-3 pe-5'>
-  #                       <strong class='fw-semibold'>Set parameters to simulate new cases</strong>
-  #                       <span class='d-block small opacity-75'>...</span>
-  #                     </span>"),
-  #                         HTML("<span class='py-3 pe-5'>
-  #                       <strong class='fw-semibold'>Use your pre-simulated data</strong>
-  #                       <span class='d-block small opacity-75'>.....</span>
-  #                     </span>")
-  #                       ),
-  #                       choiceValues = list(
-  #                         "simulate", "my_simulated_data"
-  #                       )
-  #          ),
-  #   )
-  # ),
-  fluidRow(column(
-    5,
-    tags$p("Change the exacerbations ratio used to compute the hospitalizations of the population", ),
-  ), column(
+  fluidRow(
+    column(
+      5,
+      tags$p("Change the exacerbations ratio used to compute the hospitalizations of the population", ),
+    ), 
+    column(
     7,
     card(
       fill = FALSE,
