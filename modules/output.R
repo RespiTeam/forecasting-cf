@@ -10,6 +10,10 @@ hospiFilter <- popover(
   )
 )
 
+source("modules/barGraphCard.R")
+source("modules/populationTableCard.R")
+source("modules/survivalGraphCard.R")
+source("modules/comorbTableCard.R")
 
 # Module UI function
 outputUI <- function(id) {
@@ -33,18 +37,10 @@ outputUI <- function(id) {
           full_screen = FALSE,
         ),
         barGraphCardUI(ns("diseaseSeverity"), "Disease Severity"),
-        tableCardUI(ns("totalPop"), "Population"),
-        card(
-          fill = FALSE,
-          full_screen = TRUE,
-          card_header(
-            "Survival Curves",
-          ),
-          card_body(
-            plotOutput(outputId = "kmPlot")
-          )
-        ),
+        populationTableCardUI(ns("totalPop"), "Population"),
+        survivalGraphCardUI(ns("survivalCurve")),
         barGraphCardUI(ns("exacerbations"),"Pulmonary Exacerbations"),
+        comorbTableCardUI(ns("comorbiTable"),"Comorbidities")
     ) # End of tags list
 
 }
@@ -56,8 +52,10 @@ outputServer <- function(id, r, colorPalette) {
     # Modules server
     
     barGraphCardServer("diseaseSeverity", r, colorPalette, "med", "Number of patients")
-    tableCardServer("totalPop", r, "med")
+    populationTableCardServer("totalPop", r, "med")
+    survivalGraphCardServer("survivalCurve", r, colorPalette)
     barGraphCardServer("exacerbations", r, colorPalette,  "exac", "Number of exacerbations")
+    comorbTableCardServer("comorbiTable", r, "med")
     
   })
   

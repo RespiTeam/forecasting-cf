@@ -18,13 +18,9 @@ library(auth0)
 library(shinyWidgets)
 
 source("modules/transitionRatesTab.R")
-source("modules/newCasesTab.R")
+source("modules/moreSettings.R")
 source("modules/uploadFileCard.R")
-source("modules/modelGraph.R")
 source("modules/output.R")
-source("modules/barGraphCard.R")
-source("modules/tableCard.R")
-
 
 # Custom JavaScript to send a blur event back to Shiny
 # Shiny.setInputValue('text_input_blur', Math.random());
@@ -271,6 +267,8 @@ ui <- auth0_ui(
               label =  tooltip(trigger = list("To:", bs_icon("info-circle")), "Up to 25+"),
               value = as.integer(format(Sys.Date(), "%Y")) + 1,
               step = 1,
+              min = 2025,
+              max = 2033
             )
           ),
           
@@ -285,6 +283,8 @@ ui <- auth0_ui(
                 label = NULL,
                 value = 5,
                 step = 10,
+                min = 5,
+                max=50,
                 width = 100
               ),
               style = "display:inline-block"
@@ -334,7 +334,7 @@ ui <- auth0_ui(
       icon = icon("glyphicon glyphicon-cog", lib="glyphicon"),
       navset_card_tab(
         nav_panel("CFTR Transition Rates", transitionRatesTab("transitionTab")),
-        nav_panel("More Settings", newCasesTab("newCasesTab"))
+        nav_panel("More Settings", moreSettingsUI("moreSettings"))
       )
     )
   )

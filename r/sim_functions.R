@@ -418,8 +418,10 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
   # Building dataset for plotting K-M curve
   summarizeKMResults=buildingSummarizeKMData(simResults2, end_date)
   
+  summarizeResultsComorb=buildingSummarizeDataComorb(simResults, start_date)
+  
   return(
-    list("qty"=summarizeResults,"km"=summarizeKMResults)
+    list("qty"=summarizeResults,"km"=summarizeKMResults, "qty2"=summarizeResultsComorb)
   )
   
 }
@@ -507,6 +509,102 @@ buildingSummarizeData<- function(simResults, start_date) {
   
 }
 
+buildingSummarizeDataComorb<- function(simResults, start_date) {
+  
+  # Getting the milestone years
+  years <- simResults %>%
+    select(contains("state_at_"))
+  
+  years = names(years)
+  years_int= sub("^state_at_", "", years)
+  
+  #summarizing for initState
+  new_state=sym("initState")
+  last_day = as.Date(paste(year(start_date)-1,"12-31",sep="-"))
+  #reducing the dataset to keep only the summarize groups of interest
+  simResults_temp = simResults |>
+    filter(!is.na(!!new_state)) |> 
+    mutate(
+      current_age=as.numeric((last_day - birthDate)/365),
+      age_range=case_when(current_age <=10~'0-10',
+                          current_age >10 & current_age <=20~'10-20',
+                          current_age >20 & current_age <=30~'20-30',
+                          current_age >30 & current_age <=40~'30-40',
+                          current_age >40 & current_age <=50~'40-50',
+                          current_age >50 & current_age <=60~'50-60',
+                          current_age >60 & current_age <=70~'60-70',
+                          current_age >70 ~'70+',
+                          .default=NA)
+    ) |>
+    select(iteration,group,age_range,!!new_state) |> 
+    group_by(iteration,group, age_range, !!new_state) |>
+    summarize(
+      value=n(), 
+      .groups="drop"
+    ) |>
+    group_by(group,age_range,!!new_state) |>
+    summarise(
+      med = median(value, na.rm=TRUE),
+      .groups="drop"
+    )
+  
+  simResults_temp = simResults_temp |> mutate(
+    milestone=as.numeric(year(start_date)-1)
+  ) |> rename(
+    state=!!new_state
+  )
+  
+  summarizeResults <- simResults_temp
+  
+  for (y in years_int) {
+    
+    new_state=sym(paste("state_at_",y,sep=""))
+    last_day = as.Date(paste(y,"12-31",sep="-"))
+    #reducing the dataset to keep only the summarize groups of interest
+    simResults_temp = simResults |>
+      filter(!is.na(!!new_state)) |> 
+      mutate(
+        current_age=as.numeric((last_day - birthDate)/365),
+        age_range=case_when(current_age <=10~'0-10',
+                            current_age >10 & current_age <=20~'10-20',
+                            current_age >20 & current_age <=30~'20-30',
+                            current_age >30 & current_age <=40~'30-40',
+                            current_age >40 & current_age <=50~'40-50',
+                            current_age >50 & current_age <=60~'50-60',
+                            current_age >60 & current_age <=70~'60-70',
+                            current_age >70 ~'70+',
+                            .default=NA)
+      ) |>
+      select(iteration,group,age_range,!!new_state) |> 
+      group_by(iteration,group, age_range, !!new_state) |>
+      summarize(
+        value=n(), 
+        .groups="drop"
+      ) |>
+      group_by(group,age_range,!!new_state) |>
+      summarise(
+        med = median(value, na.rm=TRUE),
+        .groups="drop"
+      )
+    
+    simResults_temp = simResults_temp |> mutate(
+      milestone=as.numeric(y)
+    ) |> rename(
+      state=!!new_state
+    )
+    
+    #Adding the reduced dataset to summarizeResults
+    summarizeResults = bind_rows(summarizeResults,
+                                 simResults_temp)
+    
+    
+  }
+  
+  return(summarizeResults)
+  
+}
+
+
 
 buildingSummarizeKMData <- function(simResults2, end_date) {
   
@@ -581,6 +679,78 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
   
 }
 
+buildingSummarizeKMDataAll <- function(simResults2, end_date) {
+  
+  kmResults=tibble()
+  
+  kmData=simResults2 |> 
+    mutate(
+      current_date = if_else(new_state==0, end_date, current_date),
+      exit_time=round(as.numeric(difftime(current_date,birthDate, units="days")/365),2),
+      enter_time=round(as.numeric(difftime(enter_date,birthDate, units="days")/365),2),
+      group=as.factor(group)
+    ) |> rename(
+      status=new_state
+    )
+  
+  print("Summarize deaths by year")
+  print(
+    kmData |>
+      filter(status==1) |>
+      mutate(
+        year = year(current_date)
+      ) |>
+      summarise(
+        deaths = sum(status),
+        .by = c(iteration, year, group)
+      ) |> 
+      summarise(
+        deaths = median(deaths),
+        .by = c(year, group)
+      ) |> 
+      arrange(year, group)
+  )
+  
+  deathsData <- kmData |>
+    filter(status==1) |>
+    mutate(
+      year = year(current_date)
+    )
+  
+  simYears <- unique(deathsData$year)
+  
+  deathsData |> 
+    filter(year == simYears[1]) |> 
+    ggplot(aes(x=exit_time))+
+    geom_histogram(aes(y=..density..), alpha=0.5)+
+    theme_classic()+
+    facet_grid(group ~ .)+
+    labs(x="Exit time (age)", y="NUmber of deaths")
+  
+  ggsave("outputs/hist_deaths.png")
+  
+  
+  for (i in unique(simResults2$iteration)) {
+    
+    sp <- summary(survfit2(Surv(enter_time, exit_time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
+    kmResults=bind_rows(kmResults,
+                        tibble(time=sp$time, atRisk=sp$n.risk, nEvents=sp$n.event, survival=sp$surv, group=sp$strata, iteration=i)
+    )
+    
+  }
+  
+  # summarizing
+  kmResults = kmResults |> mutate(
+    group=str_remove(group, "group=")
+  ) |> group_by(time, group) |> 
+    summarise(
+      survival=mean(survival),
+      .groups="drop"
+    )
+  
+  return(kmResults)
+  
+}
 
 initial_data_validation <- function(df) {
   

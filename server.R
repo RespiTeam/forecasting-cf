@@ -45,11 +45,14 @@ exacerbations_ratios_default=tibble(
 )
 
 inital_data_default <- read.csv(file = "data/initPop.csv")
+comorbiRatios <- read.csv(file = "data/commorbidities_ratios.csv")
+comorbiDescription <- read.csv(file = "data/ComorbiditiesDescription.csv")
 
 #Loading the simulation core functions
 source('r/sim_functions.R')
 source('r/micSim.r')
 source('r/auxFctMicSim.r')
+source('r/myFuns.r')
 
 plan(multisession)
 
@@ -67,18 +70,17 @@ color_palette = rgb(r,g,b, maxColorValue = 255)
 server <- auth0_server(function(input, output, session) {
   
     #Defining reactive values
+    comorList <- reactiveVal(
+      groupingComorbiditiesRatios(comorbiRatios, comorbiDescription)
+      )
+  
     rv <- reactiveValues(qtyData=NULL, survival_data=NULL, erDF508=rep(0,10),
-                         transition_data=transition_data_default,
+                         qtyComorbi=NULL, transition_data=transition_data_default,
                          age_proportions_newcases=newcases_ages_data,
                          exacerbations_ratios=exacerbations_ratios_default,
                          initial_pop=inital_data_default,
-                         forecasted_scenario=NULL, forecasted_times=NULL, toYear=NULL)
-    
-    rvSeverity <- reactiveValues(data=NULL)
-    rvPopulation <- reactiveValues(data=NULL)
-    rvSurvival <- reactiveValues(data=NULL)
-    rvExacerbations <- reactiveValues(data=NULL)
-    
+                         forecasted_scenario=NULL, forecasted_times=NULL, 
+                         toYear=NULL, comorbiRatios = comorbiRatios)
     
     observe({
 
@@ -163,6 +165,12 @@ server <- auth0_server(function(input, output, session) {
                             .default = NA)
           )
           
+          dataList$qty2 <- dataList$qty2 |> mutate(
+            group=case_when(group=="cftr"~"Modulator", 
+                            group=="non_cftr"~"Non-modulator",
+                            .default = NA)
+          )
+          
           dataList$km <- dataList$km |> mutate(
             group=case_when(group=="cftr"~"Modulator", 
                             group=="non_cftr"~"Non-modulator",
@@ -174,7 +182,6 @@ server <- auth0_server(function(input, output, session) {
           rv$forecasted_times=dataList$times
           rv$toYear=input$to
           
-          # rv$qtyData=dataList$qty
           ratios_tb <-  rv$exacerbations_ratios
             
           rv$qtyData <- dataList$qty |> 
@@ -186,6 +193,9 @@ server <- auth0_server(function(input, output, session) {
                              state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
                              state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
             )
+          
+          
+          rv$qtyComorbi <- dataList$qty2
           
           rv$survival_data = dataList$km
           
@@ -265,120 +275,10 @@ server <- auth0_server(function(input, output, session) {
       }
     })
     
-    # New cases age groups table
-    output$newcases_groups=renderDT(
-      rv$age_proportions_newcases, 
-      editable = list(target = "cell", disable = list(columns = c(0))),
-      colnames = c("Age distribution of new diagnoses", "%"),
-      rownames = FALSE,
-      selection = 'none',
-      options = list(
-        dom = 't'
-      ),
-      server = TRUE
-    )
-    
-    # Observe cell edits in New cases age groups table
-    observeEvent(input$newcases_groups_cell_edit, {
-      info <- input$newcases_groups_cell_edit
-
-      if (as.numeric(info$value)<=1 & as.numeric(info$value)>=0 ) {
-
-        # Update the reactive data with the new value
-        rv$age_proportions_newcases[info$row, info$col + 1] <- as.numeric(info$value)
-
-      } else {
-
-        showModal(modalDialog(
-          title = "Invalid proportion",
-          "Proportions should be values between 0 and 1",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-
-      }
-
-      # Revert the change
-      if (rv$age_proportions_newcases[info$row, info$col + 1] != as.numeric(info$value)) {
-
-        output$newcases_groups=renderDT(
-          rv$age_proportions_newcases,
-          editable = list(target = "cell", disable = list(columns = c(0))),
-          colnames = c("Age Group", "Proportion"),
-          rownames = FALSE,
-          selection = 'none',
-          options = list(
-            dom = 't'
-          ),
-          server = TRUE
-        )
-
-      }
-
-    })
-    
-    # Exacerbations Rates table
-    output$exacerbations_table=renderDT(
-      rv$exacerbations_ratios, 
-      editable = list(target = "cell", disable = list(columns = c(0))),
-      colnames = c("State", "Modulator", "Non-Modulator"),
-      rownames = FALSE,
-      selection = 'none',
-      options = list(
-        dom = 't'
-      ),
-      server = TRUE
-    )
-    
-    # Observe cell edits in Exacerbations Rates table
-    observeEvent(input$exacerbations_table_cell_edit, {
-      info <- input$exacerbations_table_cell_edit
-      
-      if (!is.na(as.numeric(info$value))) {
-        
-        # Update the reactive data with the new value
-        rv$exacerbations_ratios[info$row, info$col + 1] <- as.numeric(info$value)
-        
-      } else {
-        
-        showModal(modalDialog(
-          title = "Invalid proportion",
-          "You should enter a number",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        
-      }
-      
-      # Revert the change
-      if (is.na(as.numeric(info$value))) {
-        
-        output$exacerbations_table=renderDT(
-          rv$exacerbations_ratios, 
-          editable = list(target = "cell", disable = list(columns = c(0))),
-          colnames = c("State", "Modulator", "Non-modulator"),
-          rownames = FALSE,
-          selection = 'none',
-          options = list(
-            dom = 't'
-          ),
-          server = TRUE
-        )
-        
-      }
-      
-    })
-    
-    # Go back to default values
-    observeEvent(input$btnDefaultExaRatios, {
-      
-      rv$exacerbations_ratios=exacerbations_ratios
-      
-    })
-    
     # Modules server -----
     
     outputServer("simResults", rv, color_palette)
+    moreSettingsServer("moreSettings", rv, comorList)
     
     # OUTPUT PLOTS --------
     
@@ -395,82 +295,6 @@ server <- auth0_server(function(input, output, session) {
       rv$forecasted_times
     })
     
-    
-    output$kmPlot <- renderPlot({
-      
-      validate(need(rv$survival_data, "No scenario has been forecasted yet"))
-      
-      #start to plotting
-      rv$survival_data |>
-        ggplot(aes(x=time, y=survival, colour = group)) +
-        geom_step(direction="hv", linewidth = 1.5) +
-        geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray", linewidth = 1)+
-        theme_classic() +
-        labs(y=paste("Survival Probaility at ", rv$toYear,sep=""), x="Time (Age)")+
-        theme(legend.position="bottom")+
-        theme(
-          legend.text = element_text(size = 14),  # Adjust the size as needed
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14)
-        )+
-        scale_x_continuous(breaks = seq(0, 80, by = 5))+
-        scale_color_manual(values=color_palette[4:3])
-        
-    })
-    
-    # output$hospPlot <- renderPlot({
-    #   
-    #   validate(need(rv$hospiplot_data, "No scenario has been forecasted yet"))
-    #     
-    #   datag= rv$hospiplot_data
-    #   
-    #   ratios_tb = rv$exacerbations_ratios
-    #   
-    #   #start to plotting
-    #   datag = datag |> filter(state != 'dead' & state!="transplant")
-    #   
-    #   # Applying filters to databp3
-    #   if (input$ageFilter_hospi!="All") {
-    #     datag = datag |> filter(age_range==input$ageFilter_hospi)
-    #   }
-    #   
-    #   datag = datag |> mutate(
-    #       hosp=case_when(state=="mild" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
-    #                      state=="moderate" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
-    #                      state=="severe" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
-    #                      state=="mild" & group=="Modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
-    #                      state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
-    #                      state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
-    #     ) |>
-    #     group_by(milestone, state) |>
-    #     summarise(
-    #       hosp=sum(hosp),
-    #       .groups="drop"
-    #     )
-    #   
-    #   datag |> 
-    #   ggplot(aes(
-    #     x = as.factor(milestone),
-    #     y = hosp,
-    #     fill = state
-    #   )) +
-    #     geom_bar(position = "stack", stat = "identity") +
-    #     theme_classic() +
-    #     labs(y = "Number of exacerbations", x = "", fill = "") +
-    #     theme(legend.position = "bottom")+
-    #     theme(
-    #       legend.text = element_text(size = 14),  # Adjust the size as needed
-    #       axis.text.x = element_text(size = 14),
-    #       axis.text.y = element_text(size = 14)
-    #     )+
-    #     scale_fill_manual(values=color_palette[3:1])+
-    #     geom_text(aes(label = round(hosp,0)),
-    #               position = position_stack(vjust = 0.5),  # centers each label
-    #               color = "white",
-    #               size = 4)
-    #     
-    # })
-
 }
 )
 

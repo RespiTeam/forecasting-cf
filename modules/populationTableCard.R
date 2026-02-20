@@ -1,5 +1,5 @@
 # Module UI function
-tableCardUI <- function(id, title) {
+populationTableCardUI <- function(id, title) {
   ns <- NS(id)
   
   severityChoices <- c('mild', 'moderate', 'severe', 'transplant')
@@ -41,7 +41,7 @@ tableCardUI <- function(id, title) {
 
 
 # Module UI function
-tableCardServer <- function(id, r, targetVar) {
+populationTableCardServer <- function(id, r, targetVar) {
   
   moduleServer(id, function(input, output, session) {
     
