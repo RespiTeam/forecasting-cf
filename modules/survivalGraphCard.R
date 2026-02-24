@@ -37,7 +37,7 @@ survivalGraphCardServer <- function(id, r, colorPalette) {
           axis.text.y = element_text(size = 14)
         )+
         scale_x_continuous(breaks = seq(0, 80, by = 5))+
-        scale_color_manual(values=color_palette[4:3])
+        scale_color_manual(values=colorPalette[4:3])
       
       
       

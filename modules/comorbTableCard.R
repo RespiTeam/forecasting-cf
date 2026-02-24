@@ -1,11 +1,10 @@
 
-comorbTableCardUI <- function(id, title) {
+comorbTableCardUI <- function(id) {
   
   ns = NS(id)
   
   severityChoices <- c('mild', 'moderate', 'severe')
-  ageRanges <- c('0-10','10-20','20-30','30-40','40-50','50-60','60-70','70+')
-  comorbiditiesChoices <- c('hosp_IV_times')
+  ageRanges <- c('0-12','12-20','20-45','45-60','60+')
   
   card(
     fill = FALSE,
@@ -17,10 +16,11 @@ comorbTableCardUI <- function(id, title) {
         virtualSelectInput(
           ns("comorbidityFilter"),
           label = "Comorbidity",
-          choices = comorbiditiesChoices,
+          search = TRUE,
+          choices = NULL,
           multiple = FALSE,
-          selected = comorbiditiesChoices,
-          dropboxWrapper = "body"
+          dropboxWrapper = "body",
+          optionsCount=5
         ),
         virtualSelectInput(
           ns("stateFilter"),
@@ -41,7 +41,6 @@ comorbTableCardUI <- function(id, title) {
       )
     ),
     card_body(
-      title,
       dataTableOutput(ns("outputTable"))
     )
   )
@@ -50,17 +49,26 @@ comorbTableCardUI <- function(id, title) {
 
 
 
-comorbTableCardServer <- function(id, r, targetVar) {
+comorbTableCardServer <- function(id, r, targetVar, comorList, comorbidityChoices) {
   
   moduleServer(id, function(input, output, session) {
   
+    observe({
+      
+      updateVirtualSelect(
+        inputId = "comorbidityFilter",
+        choices = comorbidityChoices,
+        selected = "hosp_times"
+      )
+      
+    })
+    
     output$outputTable = DT::renderDataTable({
       
       validate(need(r$qtyData, "No scenario has been forecasted yet"))
       
-      col_sym <- input$comorbidityFilter
-      col_sym <- ensym(col_sym)
-      datag= r$qtyComorbi
+      selComor <- input$comorbidityFilter
+      datag <- r$qtyComorbi
       
       # Applying filters
       validate(
@@ -71,7 +79,6 @@ comorbTableCardServer <- function(id, r, targetVar) {
       datag <- datag |> filter(age_range %in% input$ageFilter)
       datag <- datag |> filter(state %in% input$stateFilter)
       
-      
       datag <- datag |> filter(state != 'dead') |>
         group_by(group,age_range, state, milestone) |>
         summarise(
@@ -81,24 +88,37 @@ comorbTableCardServer <- function(id, r, targetVar) {
         arrange(milestone, group, state, age_range) |> 
         rename(
           Patients=subj
-        ) |> 
-        left_join(
-          r$comorbiRatios |> select(group, age_range, state, {{col_sym}}),
-          by=join_by(group,age_range,state)
-        ) |> 
-        mutate (
-          Patients = Patients*{{col_sym}},
-          group=case_when(group=="Modulator"~"Modulator", 
-                          group=="Non-modulator"~"Non_modulator"
-          ))
-
-      
-      print(
-        datag |> 
-              filter(is.na(Patients))
         )
       
+      keys <- names(comorList()[[selComor]] |> select(!ratio))
+      
+      if ("sex" %in% keys) {
+        
+        datag <- datag |> 
+          mutate(
+            Female = Patients*0.47,
+            Male = Patients*0.53
+          ) |> 
+          select(!Patients) |> 
+          pivot_longer(
+            cols = c(Female, Male),
+            names_to = "sex",
+            values_to = "Patients"
+          )
+        
+      }
+      
+      
       datag |> 
+        left_join(
+          comorList()[[selComor]],
+          by=keys
+        ) |> 
+        mutate (
+          Patients = Patients*ratio,
+          group=case_when(group=="Modulator"~"Modulator", 
+                          group=="Non-modulator"~"Non_modulator"
+          )) |> 
         group_by(group, milestone) |>
         summarise(
           Patients = round(sum(Patients, na.rm = TRUE),0),

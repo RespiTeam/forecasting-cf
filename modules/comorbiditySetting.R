@@ -1,17 +1,17 @@
 
 
-comorbiditySettingUI <- function(id) {
+comorbiditySettingUI <- function(id, title) {
 
   ns <- NS(id)
   
   layout_columns(
       col_widths = c(5, 7),
-      tags$p(sprintf("Set the ratios for %s by group",id)),
+      tags$p(sprintf("Set the ratios for %s by group",title)),
       card(
         fill = FALSE,
         full_screen = FALSE,
         id = ns("comorbidity_card"),
-        card_header(sprintf("Ratios for %s", id)),
+        card_header(sprintf("Ratios for %s", title)),
         card_body(
           DTOutput(
             ns("comorbidityRatiosTable")
@@ -74,13 +74,6 @@ comorbiditySettingServer <- function(id, rComorList) {
         
       }
       
-    })
-    
-    observe ({
-      
-      print("go")
-      print(rComorList()[[id]])
-        
     })
     
     

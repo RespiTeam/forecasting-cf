@@ -412,6 +412,9 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
       arrange(lastState)
     )
   
+  tempDataPath <- tempfile(fileext = ".parquet")
+  arrow::write_parquet(simResults, tempDataPath)
+  
   # Building summarize results
   summarizeResults=buildingSummarizeData(simResults, start_date)
   
@@ -421,7 +424,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
   summarizeResultsComorb=buildingSummarizeDataComorb(simResults, start_date)
   
   return(
-    list("qty"=summarizeResults,"km"=summarizeKMResults, "qty2"=summarizeResultsComorb)
+    list("qty"=summarizeResults,"km"=summarizeKMResults, "qty2"=summarizeResultsComorb, "dataPath"=tempDataPath)
   )
   
 }
@@ -526,14 +529,11 @@ buildingSummarizeDataComorb<- function(simResults, start_date) {
     filter(!is.na(!!new_state)) |> 
     mutate(
       current_age=as.numeric((last_day - birthDate)/365),
-      age_range=case_when(current_age <=10~'0-10',
-                          current_age >10 & current_age <=20~'10-20',
-                          current_age >20 & current_age <=30~'20-30',
-                          current_age >30 & current_age <=40~'30-40',
-                          current_age >40 & current_age <=50~'40-50',
-                          current_age >50 & current_age <=60~'50-60',
-                          current_age >60 & current_age <=70~'60-70',
-                          current_age >70 ~'70+',
+      age_range=case_when(current_age <=12~'0-12',
+                          current_age >12 & current_age <=20~'12-20',
+                          current_age >20 & current_age <=45~'20-45',
+                          current_age >45 & current_age <=60~'45-60',
+                          current_age >60 ~'60+',
                           .default=NA)
     ) |>
     select(iteration,group,age_range,!!new_state) |> 
@@ -565,14 +565,11 @@ buildingSummarizeDataComorb<- function(simResults, start_date) {
       filter(!is.na(!!new_state)) |> 
       mutate(
         current_age=as.numeric((last_day - birthDate)/365),
-        age_range=case_when(current_age <=10~'0-10',
-                            current_age >10 & current_age <=20~'10-20',
-                            current_age >20 & current_age <=30~'20-30',
-                            current_age >30 & current_age <=40~'30-40',
-                            current_age >40 & current_age <=50~'40-50',
-                            current_age >50 & current_age <=60~'50-60',
-                            current_age >60 & current_age <=70~'60-70',
-                            current_age >70 ~'70+',
+        age_range=case_when(current_age <=12~'0-12',
+                            current_age >12 & current_age <=20~'12-20',
+                            current_age >20 & current_age <=45~'20-45',
+                            current_age >45 & current_age <=60~'45-60',
+                            current_age >60 ~'60+',
                             .default=NA)
       ) |>
       select(iteration,group,age_range,!!new_state) |> 

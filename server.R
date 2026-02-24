@@ -14,6 +14,7 @@ library(dplyr)
 library(future)
 library(promises)
 library(RColorBrewer)
+library(arrow)
 
 transition_data_default=tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
@@ -48,6 +49,8 @@ inital_data_default <- read.csv(file = "data/initPop.csv")
 comorbiRatios <- read.csv(file = "data/commorbidities_ratios.csv")
 comorbiDescription <- read.csv(file = "data/ComorbiditiesDescription.csv")
 
+comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(comorbiDescription$Description)
+
 #Loading the simulation core functions
 source('r/sim_functions.R')
 source('r/micSim.r')
@@ -76,11 +79,13 @@ server <- auth0_server(function(input, output, session) {
   
     rv <- reactiveValues(qtyData=NULL, survival_data=NULL, erDF508=rep(0,10),
                          qtyComorbi=NULL, transition_data=transition_data_default,
+                         new_F508=NULL, new_0F508=NULL,
                          age_proportions_newcases=newcases_ages_data,
                          exacerbations_ratios=exacerbations_ratios_default,
                          initial_pop=inital_data_default,
                          forecasted_scenario=NULL, forecasted_times=NULL, 
-                         toYear=NULL, comorbiRatios = comorbiRatios)
+                         toYear=NULL, comorbiRatios = comorbiRatios,
+                         dataPath=NULL)
     
     observe({
 
@@ -131,23 +136,22 @@ server <- auth0_server(function(input, output, session) {
         text = "Please wait..."
       )
       
-      nIter=input$nSim
-      period_length=input$breaks
-      start_date=as.Date(paste(as.integer(input$from)+1,"-01-01",sep=""))
-      end_date=as.Date(paste(input$to,"-12-31",sep=""))
+      nIter <- input$nSim
+      period_length <- input$breaks
+      start_date <- as.Date(paste(as.integer(input$from)+1,"-01-01",sep=""))
+      end_date <- as.Date(paste(input$to,"-12-31",sep=""))
       
-      prop508=input$prop508/100
-      new_F508=as.integer(input$newCases*prop508)
-      new_0F508=as.integer(input$newCases*(1-prop508))
+      initial_data <- rv$initial_pop
+      verDF508 <- 1-rv$erDF508
+      dist_ages_newcases <- rv$age_proportions_newcases
       
-      initial_data=rv$initial_pop
-      verDF508=1-rv$erDF508
-      dist_ages_newcases=rv$age_proportions_newcases
+      newCasesF508 <- rv$new_F508
+      newCases0F508 <- rv$new_0F508
       
       future({
         
         start_time=format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-        dataList=iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, new_F508, new_0F508, verDF508, dist_ages_newcases)
+        dataList=iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, newCasesF508, newCases0F508, verDF508, dist_ages_newcases)
         end_time=format(Sys.time(), "%Y-%m-%d %H:%M:%S")
         
         dataList$times=paste("From ",start_time," to ",end_time)
@@ -194,10 +198,11 @@ server <- auth0_server(function(input, output, session) {
                              state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
             )
           
-          
           rv$qtyComorbi <- dataList$qty2
           
-          rv$survival_data = dataList$km
+          rv$survival_data <- dataList$km
+          
+          rv$dataPath <- dataList$dataPath
           
           remove_modal_gif()
           
@@ -277,7 +282,7 @@ server <- auth0_server(function(input, output, session) {
     
     # Modules server -----
     
-    outputServer("simResults", rv, color_palette)
+    outputServer("simResults", rv, color_palette, comorList, comorbiditiesNamesValues)
     moreSettingsServer("moreSettings", rv, comorList)
     
     # OUTPUT PLOTS --------

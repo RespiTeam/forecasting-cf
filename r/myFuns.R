@@ -17,7 +17,7 @@ groupingComorbiditiesRatios <- function(ratiosData, descriptionData) {
       ratiosData <- ratiosData |> 
         select(group, state, age_range, sex, {{col_sym}}) |> 
         summarize(
-          mean=mean({{col_sym}}),
+          ratio=mean({{col_sym}}),
           .by=dplyr::all_of(keys)
         )
       

@@ -57,46 +57,30 @@ moreSettingsUI <- function(id) {
         )
       )
     ),
-    layout_column_wrap(
-      fillable = FALSE,
-      width=1/2,
-      tags$p("Change the exacerbations ratio used to compute the hospitalizations of the population", ),
-      layout_column_wrap(
-        fillable = FALSE,
-        width=1,
-        card(
-          fill = FALSE,
-          full_screen = FALSE,
-          id = ns("exacerbations_rates"),
-          card_header("Exacerbations rates"),
-          card_body(
-            DTOutput(ns("exacerbations_table"))
-            ),
-          card_footer(actionButton(
-            inputId = ns("btnDefaultExaRatios"),
-            label = "Use default",
-            icon = NULL,
-            width = NULL
-          ))
-        )
-    )),
-    comorbiditySettingUI(ns("hosp_times")),
-    comorbiditySettingUI(ns("homeIV_times")),
-    comorbiditySettingUI(ns("pancreatic_status")),
-    comorbiditySettingUI(ns("cfrd_status")),
-    comorbiditySettingUI(ns("compl_resp")),
-    comorbiditySettingUI(ns("compl_digest")),
-    comorbiditySettingUI(ns("compl_liver")),
-    comorbiditySettingUI(ns("compl_mental")),
-    comorbiditySettingUI(ns("compl_bone")),
-    comorbiditySettingUI(ns("compl_malignancy")),
-    comorbiditySettingUI(ns("pregnancy_status"))
+    comorbiditySettingUI(ns("hosp_times"), "Hospitalization"),
+    comorbiditySettingUI(ns("homeIV_times"),"Home IV"),
+    comorbiditySettingUI(ns("pancreatic_status"),"Pancreatic insufficiency"),
+    comorbiditySettingUI(ns("cfrd_status"),"CFRD"),
+    comorbiditySettingUI(ns("compl_resp"),"Respiratory related complication"),
+    comorbiditySettingUI(ns("compl_digest"),"Digestive related complication"),
+    comorbiditySettingUI(ns("compl_liver"),"Liver related complication"),
+    comorbiditySettingUI(ns("compl_mental"),"Mental health related complication"),
+    comorbiditySettingUI(ns("compl_bone"),"Bone related complication"),
+    comorbiditySettingUI(ns("compl_malignancy"),"Malignancy"),
+    comorbiditySettingUI(ns("pregnancy_status"),"Pregnancy")
   )
 }
 
 moreSettingsServer <- function(id, r, rComorList) {
   
   moduleServer(id, function(input, output, session) {
+    
+    observe({
+      prop508 <- input$prop508/100
+      r$new_F508 <- as.integer(input$newCases*prop508)
+      r$new_0F508 <- as.integer(input$newCases*(1-prop508))  
+    })
+    
     
     # New cases age groups table
     output$newcases_groups=renderDT(
@@ -150,65 +134,7 @@ moreSettingsServer <- function(id, r, rComorList) {
       
     })
     
-    # Exacerbations Rates table
-    output$exacerbations_table=renderDT(
-      r$exacerbations_ratios, 
-      editable = list(target = "cell", disable = list(columns = c(0))),
-      colnames = c("State", "Modulator", "Non-Modulator"),
-      rownames = FALSE,
-      selection = 'none',
-      options = list(
-        dom = 't'
-      ),
-      server = TRUE
-    )
-    
-    # Observe cell edits in Exacerbations Rates table
-    observeEvent(input$exacerbations_table_cell_edit, {
-      info <- input$exacerbations_table_cell_edit
-      
-      if (!is.na(as.numeric(info$value))) {
-        
-        # Update the reactive data with the new value
-        r$exacerbations_ratios[info$row, info$col + 1] <- as.numeric(info$value)
-        
-      } else {
-        
-        showModal(modalDialog(
-          title = "Invalid proportion",
-          "You should enter a number",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        
-      }
-      
-      # Revert the change
-      if (is.na(as.numeric(info$value))) {
-        
-        output$exacerbations_table=renderDT(
-          r$exacerbations_ratios, 
-          editable = list(target = "cell", disable = list(columns = c(0))),
-          colnames = c("State", "Modulator", "Non-modulator"),
-          rownames = FALSE,
-          selection = 'none',
-          options = list(
-            dom = 't'
-          ),
-          server = TRUE
-        )
-        
-      }
-      
-    })
-    
-    # Go back to default values
-    observe({
-      
-      r$exacerbations_ratios=exacerbations_ratios
-      
-    }) |> bindEvent(input$btnDefaultExaRatios)
-    
+    # Modules Server -------
     
     comorbiditySettingServer("hosp_times",rComorList)
     comorbiditySettingServer("homeIV_times",rComorList)
