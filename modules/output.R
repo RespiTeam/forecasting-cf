@@ -23,23 +23,22 @@ outputUI <- function(id) {
   
     tagList(
         
+
+        HTML("<span class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
+        CF clinicians and researchers understanding the changing demographics of the
+        population and healthcare resources needs given the current knowledge of the
+        benefits of CFTR modulators on key clinical outcomes.</span>"),
         tags$p(
-            HTML("<span class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
-            CF clinicians and researchers understanding the changing demographics of the
-            population and healthcare resources needs given the current knowledge of the
-            benefits of CFTR modulators on key clinical outcomes.</span>"),
-            tags$p(
-              downloadButton(
-                outputId = ns("download_data_btn"),
-                label = "Download Data"
-              )
-            )
-        ),
-        value_box( 
-          title = textOutput("times"),
-          value = textOutput("selected_scenario"),
-          theme = "text-green",
-          full_screen = FALSE,
+          value_box( 
+            title = textOutput(ns("times")),
+            value = textOutput(ns("selected_scenario")),
+            theme = "text-green",
+            full_screen = FALSE,
+          ),
+          downloadButton(
+            outputId = ns("download_data_btn"),
+            label = "Download Data"
+          )
         ),
         barGraphCardUI(ns("diseaseSeverity"), "Disease Severity"),
         populationTableCardUI(ns("totalPop"), "Population"),
