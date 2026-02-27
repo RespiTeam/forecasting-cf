@@ -28,17 +28,15 @@ outputUI <- function(id) {
         CF clinicians and researchers understanding the changing demographics of the
         population and healthcare resources needs given the current knowledge of the
         benefits of CFTR modulators on key clinical outcomes.</span>"),
-        tags$p(
-          value_box( 
+        value_box( 
             title = textOutput(ns("times")),
-            value = textOutput(ns("selected_scenario")),
+            value = tags$div(
+              tags$p(textOutput(ns("selected_scenario"))),
+              tags$p(downloadButton(outputId = ns("download_data_btn"), label = "Simulated data")),
+            ),
             theme = "text-green",
             full_screen = FALSE,
-          ),
-          downloadButton(
-            outputId = ns("download_data_btn"),
-            label = "Download Data"
-          )
+            min_height = 150
         ),
         barGraphCardUI(ns("diseaseSeverity"), "Disease Severity"),
         populationTableCardUI(ns("totalPop"), "Population"),
@@ -68,6 +66,19 @@ outputServer <- function(id, r, colorPalette, comorList, comorbidityChoices) {
       
     )
     
+    output$selected_scenario <- renderText({
+      
+      validate(need(r$forecasted_scenario, ""))
+      r$forecasted_scenario
+      
+    })
+      
+    output$times <- renderText({
+      
+      validate(need(r$forecasted_times, "No scenario has been forecasted yet"))
+      r$forecasted_times
+      
+    })
     
     # Modules server
     

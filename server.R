@@ -182,9 +182,9 @@ server <- auth0_server(function(input, output, session) {
           )
           
           # Saving some data of the simulated scenario in the result
-          rv$forecasted_scenario = paste("Results for ",input$scenarios," scenario",sep="")
-          rv$forecasted_times=dataList$times
-          rv$toYear=input$to
+          rv$forecasted_scenario <- paste("Results for ",input$scenarios," scenario",sep="")
+          rv$forecasted_times <- dataList$times
+          rv$toYear <- input$to
           
           ratios_tb <-  rv$exacerbations_ratios
             
@@ -284,21 +284,6 @@ server <- auth0_server(function(input, output, session) {
     
     outputServer("simResults", rv, color_palette, comorList, comorbiditiesNamesValues)
     moreSettingsServer("moreSettings", rv, comorList)
-    
-    # OUTPUT PLOTS --------
-    
-    output$selected_scenario <- renderText({
-      
-      validate(need(rv$forecasted_scenario, ""))
-      rv$forecasted_scenario
-      
-    })
-    
-    output$times <- renderText({
-      
-      validate(need(rv$forecasted_times, "No scenario has been forecasted yet"))
-      rv$forecasted_times
-    })
     
 }
 )

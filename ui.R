@@ -22,80 +22,6 @@ source("modules/moreSettings.R")
 source("modules/uploadFileCard.R")
 source("modules/output.R")
 
-# Custom JavaScript to send a blur event back to Shiny
-# Shiny.setInputValue('text_input_blur', Math.random());
-js <- "
-$(document).on('shiny:connected', function(event) {
-  $('#to').on('blur', function() {
-       if ($('#to').val()-$('#from').val()>25 | $('#to').val()-$('#from').val()<0) {
-          $('#valTo').modal('show');
-          $('#to').val(parseFloat($('#from').val())+5);
-       }
-  });
-  $('#newCases').on('blur', function() {
-       if ($('#newCases').val()>150 | $('#newCases').val()<0) {
-          $('#valNewCases').modal('show');
-          $('#newCases').val('87');
-       }
-  });
-  $('#prop508').on('blur', function() {
-       if ($('#prop508').val()>100 | $('#prop508').val()<0) {
-          $('#valPct').modal('show');
-          $('#prop508').val('96.7');
-       }
-  });
-  $('#breaks').on('blur', function() {
-       if ($('#breaks').val()>($('#to').val()-$('#from').val()) | $('#breaks').val()<=0) {
-          $('#valBreaks').modal('show');
-          $('#breaks').val('2');
-       }
-  });
-  $('#nSim').on('blur', function() {
-       if ($('#nSim').val()>1000 | $('#nSim').val()<=0) {
-          $('#valIters').modal('show');
-          $('#nSim').val('10');
-       }
-  });
-  
-  
-  // Initially hide the card if 'Hide Card' is selected by default
-  if ($('input[name=rb_initial_population]:checked').val() === 'canada') {
-      $('#initial_data_card').hide()
-  }
-  
-  $('input[name=rb_initial_population]').on('change', function() {
-       if ($(this).val() ==='canada') {
-          $('#initial_data_card').hide()
-       } else {
-          $('#initial_data_card').show()
-       }
-  });
-  
-  $('#runSim').on('click', function() {
-
-    const tabPaneDivs = $('div.tab-pane');
-    output=tabPaneDivs.eq(0)
-    rates=tabPaneDivs.eq(1)
-
-    if (rates.hasClass('active')) {
-      output.addClass('active show')
-      rates.removeClass('active show')
-    }
-    
-    const tabLinks = $('a.nav-link');
-    outputLink=tabLinks.eq(0)
-    ratesLink=tabLinks.eq(1)
-    
-    if (ratesLink.hasClass('active')) {
-      outputLink.addClass('active')
-      ratesLink.removeClass('active')
-    }
-    
-  });
-  
-});
-"
-
 validation_modal <- function(id,msg) {
   
   return (
@@ -151,11 +77,11 @@ ui <- auth0_ui(
           integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
           crossorigin = "anonymous"
         ),
-        tags$script(HTML(js)),
+        tags$script(type = "text/javascript", src="myJavascripts.js"),
         tags$title("CF forecasting app"),
         tags$div(
           HTML(
-            validation_modal("valTo", "Forecast cannot be longer than 25 years")
+            validation_modal("valTo", "Forecast cannot be longer than 7 years")
           ),
           HTML(
             validation_modal("valNewCases", "It should be a value between 1 and 150")
@@ -172,7 +98,7 @@ ui <- auth0_ui(
           HTML(
             validation_modal(
               "valIters",
-              "Tha maximum number of iterations is 1000 and it should be greater than 0"
+              "Tha maximum number of iterations is 50 and it should be greater than 4"
             )
           ),
         ),
@@ -275,7 +201,7 @@ ui <- auth0_ui(
           span(
             tooltip(
               trigger = list("Number of simulations: ", bs_icon("info-circle")),
-              "There is an inherent variability in the simulations results but, 10 simulations is enough. More simulations will take more time and results won't vary much."
+              "There is an inherent variability in the simulations results but, results become stable with 25 simulations."
             ),
             tags$div(
               numericInput(
