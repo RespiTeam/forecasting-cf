@@ -264,7 +264,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     initData_cftr = data |> filter(cftr=="cftr") |> select(!cftr)
     initData_0cftr = data |> filter(cftr=="non_cftr") |> select(!cftr)
     
-    print(paste('starting simulation',i,sep=' '))
+    # print(paste('starting simulation',i,sep=' '))
     
     # Constructing a new initial population for cftr group
     initPop_cftr=initData_cftr %>% 
@@ -314,7 +314,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     popcftr_long=Join_into_Longi(initPop_cftr,transitions_cftr,inmigrPop_cftr,start_date)
     pop0cftr_long=Join_into_Longi(initPop_0cftr,transitions_0cftr,inmigrPop_0cftr,start_date)
     
-    print("cftr Deaths")
+    # print("cftr Deaths")
     deadData <- popcftr_long |> 
       filter(initState=='dead')
     
@@ -345,7 +345,7 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     deadDataCftr <- bind_rows(deadDataCftr, deadData)
     
     # Now non-cftr group
-    print("Non-cftr Deaths")
+    # print("Non-cftr Deaths")
     
     deadData2 <- pop0cftr_long |> 
       filter(initState=='dead')
@@ -392,25 +392,25 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
     
   }
   
-  print("States before dead CFTR")
-  print(
-    deadDataCftr |> 
-      summarise(
-        dead=median(dead),
-        .by=lastState
-      ) |> 
-      arrange(lastState)
-    )
+  # print("States before dead CFTR")
+  # print(
+  #   deadDataCftr |> 
+  #     summarise(
+  #       dead=median(dead),
+  #       .by=lastState
+  #     ) |> 
+  #     arrange(lastState)
+  #   )
   
-  print("States before dead non-CFTR")
-  print(
-    deadDataNonCftr |> 
-      summarise(
-        dead=median(dead),
-        .by=lastState
-      ) |> 
-      arrange(lastState)
-    )
+  # print("States before dead non-CFTR")
+  # print(
+  #   deadDataNonCftr |> 
+  #     summarise(
+  #       dead=median(dead),
+  #       .by=lastState
+  #     ) |> 
+  #     arrange(lastState)
+  #   )
   
   tempDataPath <- tempfile(fileext = ".parquet")
   arrow::write_parquet(simResults, tempDataPath)
@@ -617,23 +617,23 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
       status=new_state
     )
   
-  print("Summarize deaths by year")
-  print(
-    kmData |>
-      filter(status==1) |>
-      mutate(
-        year = year(current_date)
-      ) |>
-      summarise(
-        deaths = sum(status),
-        .by = c(iteration, year, group)
-      ) |> 
-      summarise(
-        deaths = median(deaths),
-        .by = c(year, group)
-      ) |> 
-      arrange(year, group)
-    )
+  # print("Summarize deaths by year")
+  # print(
+  #   kmData |>
+  #     filter(status==1) |>
+  #     mutate(
+  #       year = year(current_date)
+  #     ) |>
+  #     summarise(
+  #       deaths = sum(status),
+  #       .by = c(iteration, year, group)
+  #     ) |> 
+  #     summarise(
+  #       deaths = median(deaths),
+  #       .by = c(year, group)
+  #     ) |> 
+  #     arrange(year, group)
+  #   )
   
   deathsData <- kmData |>
     filter(status==1) |>
@@ -690,23 +690,23 @@ buildingSummarizeKMDataAll <- function(simResults2, end_date) {
       status=new_state
     )
   
-  print("Summarize deaths by year")
-  print(
-    kmData |>
-      filter(status==1) |>
-      mutate(
-        year = year(current_date)
-      ) |>
-      summarise(
-        deaths = sum(status),
-        .by = c(iteration, year, group)
-      ) |> 
-      summarise(
-        deaths = median(deaths),
-        .by = c(year, group)
-      ) |> 
-      arrange(year, group)
-  )
+  # print("Summarize deaths by year")
+  # print(
+  #   kmData |>
+  #     filter(status==1) |>
+  #     mutate(
+  #       year = year(current_date)
+  #     ) |>
+  #     summarise(
+  #       deaths = sum(status),
+  #       .by = c(iteration, year, group)
+  #     ) |> 
+  #     summarise(
+  #       deaths = median(deaths),
+  #       .by = c(year, group)
+  #     ) |> 
+  #     arrange(year, group)
+  # )
   
   deathsData <- kmData |>
     filter(status==1) |>

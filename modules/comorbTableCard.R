@@ -80,12 +80,12 @@ comorbTableCardServer <- function(id, r, targetVar, comorList, comorbidityChoice
       datag <- datag |> filter(state %in% input$stateFilter)
       
       datag <- datag |> filter(state != 'dead') |>
-        group_by(group,age_range, state, milestone) |>
+        group_by(group,age_range, state, year) |>
         summarise(
           subj=sum(med),
           .groups = "drop"
         ) |> 
-        arrange(milestone, group, state, age_range) |> 
+        arrange(year, group, state, age_range) |> 
         rename(
           Patients=subj
         )
@@ -96,8 +96,8 @@ comorbTableCardServer <- function(id, r, targetVar, comorList, comorbidityChoice
         
         datag <- datag |> 
           mutate(
-            Female = Patients*0.47,
-            Male = Patients*0.53
+            Female = Patients*r$femaleProp,
+            Male = Patients*(1-r$femaleProp)
           ) |> 
           select(!Patients) |> 
           pivot_longer(
@@ -115,18 +115,16 @@ comorbTableCardServer <- function(id, r, targetVar, comorList, comorbidityChoice
           by=keys
         ) |> 
         mutate (
-          Patients = Patients*ratio,
-          group=case_when(group=="Modulator"~"Modulator", 
-                          group=="Non-modulator"~"Non_modulator"
-          )) |> 
-        group_by(group, milestone) |>
+          Patients = Patients*ratio
+          ) |> 
+        group_by(group, year) |>
         summarise(
           Patients = round(sum(Patients, na.rm = TRUE),0),
           .groups = "drop"
         ) |> 
         pivot_wider(names_from = group, values_from = Patients) |> 
         mutate(
-          Total=Modulator+Non_modulator
+          Total=Trikafta+None
         )
       
     }, 

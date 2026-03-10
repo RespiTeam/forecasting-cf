@@ -85,7 +85,7 @@ server <- auth0_server(function(input, output, session) {
                          initial_pop=inital_data_default,
                          forecasted_scenario=NULL, forecasted_times=NULL, 
                          toYear=NULL, comorbiRatios = comorbiRatios,
-                         dataPath=NULL)
+                         dataPath=NULL, femaleProp=NULL)
     
     observe({
 
@@ -154,7 +154,7 @@ server <- auth0_server(function(input, output, session) {
         dataList=iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, newCasesF508, newCases0F508, verDF508, dist_ages_newcases)
         end_time=format(Sys.time(), "%Y-%m-%d %H:%M:%S")
         
-        dataList$times=paste("From ",start_time," to ",end_time)
+        dataList$times=paste("Simulation computed from ",start_time," to ",end_time)
         
         return(dataList)
         
@@ -164,40 +164,43 @@ server <- auth0_server(function(input, output, session) {
           
           # Preprocessing simulation results
           dataList$qty <- dataList$qty |> mutate(
-            group=case_when(group=="cftr"~"Modulator", 
-                            group=="non_cftr"~"Non-modulator",
-                            .default = NA)
-          )
+            group=case_when(group=="cftr"~"Trikafta", 
+                            group=="non_cftr"~"None",
+                            .default = NA) 
+          ) |> 
+            rename(year=milestone)
           
           dataList$qty2 <- dataList$qty2 |> mutate(
-            group=case_when(group=="cftr"~"Modulator", 
-                            group=="non_cftr"~"Non-modulator",
+            group=case_when(group=="cftr"~"Trikafta", 
+                            group=="non_cftr"~"None",
                             .default = NA)
-          )
+          ) |> 
+            rename(year=milestone)
           
           dataList$km <- dataList$km |> mutate(
-            group=case_when(group=="cftr"~"Modulator", 
-                            group=="non_cftr"~"Non-modulator",
+            group=case_when(group=="cftr"~"Trikafta", 
+                            group=="non_cftr"~"None",
                             .default = NA)
           )
           
           # Saving some data of the simulated scenario in the result
-          rv$forecasted_scenario <- paste("Results for ",input$scenarios," scenario",sep="")
+          rv$forecasted_scenario <- paste(input$scenarios," scenario",sep="")
           rv$forecasted_times <- dataList$times
           rv$toYear <- input$to
           
-          ratios_tb <-  rv$exacerbations_ratios
-            
-          rv$qtyData <- dataList$qty |> 
-            mutate(
-              exac=case_when(state=="mild" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
-                             state=="moderate" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
-                             state=="severe" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
-                             state=="mild" & group=="Modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
-                             state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
-                             state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
-            )
+          # ratios_tb <-  rv$exacerbations_ratios
+          #   
+          # rv$qtyData <- dataList$qty |> 
+          #   mutate(
+          #     exac=case_when(state=="mild" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(non_cftr),0),
+          #                    state=="moderate" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(non_cftr),0),
+          #                    state=="severe" & group=="Non-modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(non_cftr),0),
+          #                    state=="mild" & group=="Modulator"~round(med*ratios_tb |> filter(state=='mild') |> pull(cftr),0),
+          #                    state=="moderate" & group=="Modulator"~round(med*ratios_tb |> filter(state=='moderate') |> pull(cftr),0),
+          #                    state=="severe" & group=="Modulator"~round(med*ratios_tb |> filter(state=='severe') |> pull(cftr),0))
+          #   )
           
+          rv$qtyData <- dataList$qty
           rv$qtyComorbi <- dataList$qty2
           
           rv$survival_data <- dataList$km

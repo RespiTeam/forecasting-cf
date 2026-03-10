@@ -16,25 +16,24 @@ source("modules/survivalGraphCard.R")
 source("modules/comorbTableCard.R")
 
 # Module UI function
-outputUI <- function(id) {
+outputUI <- function(id, respiTheme) {
   # `NS(id)` returns a namespace function, which was save as `ns` and will
   # invoke later.
   ns <- NS(id)
   
     tagList(
-        
-
         HTML("<span class='text-body-secondary fw-light'>This cystic fibrosis population forecasting application is designed to help
         CF clinicians and researchers understanding the changing demographics of the
         population and healthcare resources needs given the current knowledge of the
         benefits of CFTR modulators on key clinical outcomes.</span>"),
         value_box( 
             title = textOutput(ns("times")),
-            value = tags$div(
-              tags$p(textOutput(ns("selected_scenario"))),
-              tags$p(downloadButton(outputId = ns("download_data_btn"), label = "Simulated data")),
+            value = layout_column_wrap(
+              1/2,
+              textOutput(ns("selected_scenario")),
+              tags$p(downloadButton(outputId = ns("download_data_btn"), label = "Simulated data"))
             ),
-            theme = "text-green",
+            class = "text-dark",
             full_screen = FALSE,
             min_height = 150
         ),
@@ -68,7 +67,7 @@ outputServer <- function(id, r, colorPalette, comorList, comorbidityChoices) {
     
     output$selected_scenario <- renderText({
       
-      validate(need(r$forecasted_scenario, ""))
+      validate(need(r$forecasted_scenario,""))
       r$forecasted_scenario
       
     })
@@ -79,6 +78,14 @@ outputServer <- function(id, r, colorPalette, comorList, comorbidityChoices) {
       r$forecasted_times
       
     })
+    
+    observe({
+      
+      if (is.null(r$forecasted_scenario)) shinyjs::hide("download_data_btn") 
+      else shinyjs::show("download_data_btn")
+      
+    })
+    
     
     # Modules server
     

@@ -46,27 +46,30 @@ $(document).on('shiny:connected', function(event) {
        }
   });
   
-/*  $('#runSim').on('click', function() {
-
-    const tabPaneDivs = $('div.tab-pane');
-    output=tabPaneDivs.eq(0)
-    rates=tabPaneDivs.eq(1)
-
-    if (rates.hasClass('active')) {
-      output.addClass('active show')
-      rates.removeClass('active show')
+  // Hidding the button to download simulation data
+  /*
+  const resultsTag = document.getElementById('simResults-times');
+  const myButton = document.getElementById('runSim');
+  const myLink = document.getElementById('simResults-download_data_btn');
+  
+  myButton.addEventListener("click", (event) => {
+    if (resultsTag.innerText.trim() !== '') {
+        myButton.style.display = 'inline-block';
+        console.log(resultsTag.innerText)
+        console.log('Not empty')
+    } else {
+        myButton.style.display = 'none';
+        console.log(resultsTag.innerText)
+        console.log('empty')
     }
-    
-    const tabLinks = $('a.nav-link');
-    outputLink=tabLinks.eq(0)
-    ratesLink=tabLinks.eq(1)
-    
-    if (ratesLink.hasClass('active')) {
-      outputLink.addClass('active')
-      ratesLink.removeClass('active')
-    }
-    
-  });
-*/
+  
+  })
+  */
 
 });
+
+// document.addEventListener("DOMContentLoaded", function() {
+
+// })
+
+

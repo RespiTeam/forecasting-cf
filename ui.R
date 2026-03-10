@@ -63,6 +63,16 @@ opencollective <-
   )
 
 
+respiTheme <- bs_theme(
+  bg = "#101010",
+  fg = "#E5E3E2",
+  primary = "#118199",
+  secondary = "#024B70",
+  success = "#FD7FE4",
+  base_font = font_google("roboto"),
+  code_font = font_google("JetBrains Mono")
+)
+
 ui <- auth0_ui(
   # Define UI for application that draws a histogram
   page_navbar(
@@ -71,17 +81,22 @@ ui <- auth0_ui(
       useShinyjs(),
       tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
-        tags$link(
-          rel = "stylesheet",
-          href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
-          integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
-          crossorigin = "anonymous"
-        ),
+        # tags$link(
+        #   rel = "stylesheet",
+        #   href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+        #   integrity = "sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH",
+        #   crossorigin = "anonymous"
+        # ),
         tags$script(type = "text/javascript", src="myJavascripts.js"),
+        # tags$script(
+        #   src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+        #   integrity = "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
+        #   crossorigin = "anonymous"
+        # )
         tags$title("CF forecasting app"),
         tags$div(
           HTML(
-            validation_modal("valTo", "Forecast cannot be longer than 7 years")
+            validation_modal("valTo", "Forecast cannot be longer than 9 years")
           ),
           HTML(
             validation_modal("valNewCases", "It should be a value between 1 and 150")
@@ -101,11 +116,6 @@ ui <- auth0_ui(
               "Tha maximum number of iterations is 50 and it should be greater than 4"
             )
           ),
-        ),
-        tags$script(
-          src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
-          integrity = "sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz",
-          crossorigin = "anonymous"
         )
       )
     ),
@@ -252,7 +262,7 @@ ui <- auth0_ui(
             class = "respi-footer"
           ),
         ),
-        outputUI("simResults")
+        outputUI("simResults", respiTheme)
       )
     ),
     nav_panel(

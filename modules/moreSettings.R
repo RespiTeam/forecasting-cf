@@ -57,6 +57,20 @@ moreSettingsUI <- function(id) {
         )
       )
     ),
+    layout_column_wrap(
+      fillable = FALSE,
+      width=1/2,
+      tags$p("Set proportion (%) of females in the CF population"),
+      numericInput(
+        inputId = ns("femaleProp"),
+        label = NULL,
+        value = 47,
+        step = 1,
+        min = 0,
+        max = 100,
+        width = 90
+      )
+    ),
     comorbiditySettingUI(ns("hosp_times"), "Hospitalization"),
     comorbiditySettingUI(ns("homeIV_times"),"Home IV"),
     comorbiditySettingUI(ns("pancreatic_status"),"Pancreatic insufficiency"),
@@ -81,6 +95,9 @@ moreSettingsServer <- function(id, r, rComorList) {
       r$new_0F508 <- as.integer(input$newCases*(1-prop508))  
     })
     
+    observe({
+      r$femaleProp <- as.numeric(input$femaleProp/100)
+    })
     
     # New cases age groups table
     output$newcases_groups=renderDT(

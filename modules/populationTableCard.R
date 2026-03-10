@@ -62,20 +62,16 @@ populationTableCardServer <- function(id, r, targetVar) {
       datag = datag |> filter(state %in% input$stateFilter)
       
       datag |> filter(state != 'dead') |>
-        group_by(group,milestone) |>
+        group_by(group,year) |>
         summarise(
           subj=sum({{col_sym}}),
           .groups = "drop"
-        ) |> arrange(milestone, group) |> select(
-          milestone,
+        ) |> arrange(year, group) |> select(
+          year,
           group,
           Patients=subj,
-        ) |> mutate (
-          group=case_when(group=="Modulator"~"Modulator", 
-                          group=="Non-modulator"~"Non_modulator",
-          )
         ) |> pivot_wider(names_from = group, values_from = Patients) |> mutate(
-          Total=Modulator+Non_modulator
+          Total=Trikafta+None
         )
       
     }, 

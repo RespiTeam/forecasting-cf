@@ -2,7 +2,7 @@
 barGraphCardUI <- function(id, title) {
   ns <- NS(id)
   
-  cftrChoices <- c('Modulator', 'Non-modulator')
+  cftrChoices <- c('Trikafta', 'None')
   ageChoices <- c('Pediatrics', 'Adults')
   
   card(
@@ -14,7 +14,7 @@ barGraphCardUI <- function(id, title) {
         fixed_width = TRUE,
         virtualSelectInput(
           ns("cftrFilter"),
-          label = "CFTR",
+          label = "Modulator",
           choices = cftrChoices,
           multiple = TRUE,
           selected = cftrChoices,
@@ -65,7 +65,7 @@ barGraphCardServer <- function(id, r, colorPalette, targetVar, labY) {
       datag <- datag |> filter(age_range %in% input$ageFilter)
       
       datag <- datag |>
-        group_by(milestone, state) |>
+        group_by(year, state) |>
         summarise(
           outcome=sum({{col_sym}}),
           .groups="drop"
@@ -73,7 +73,7 @@ barGraphCardServer <- function(id, r, colorPalette, targetVar, labY) {
       
       datag |> 
         ggplot(aes(
-          x = as.factor(milestone),
+          x = as.factor(year),
           y = outcome,
           fill = state
         )) +
