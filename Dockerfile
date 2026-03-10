@@ -1,7 +1,14 @@
 FROM rocker/r-ver:4.4.3
 
+# Required packages for httpuv
+RUN apt-get update && apt-get install -y \
+  pkg-config \
+  zlib1g-dev \
+  libssl-dev \
+  libxml2-dev \
+  libcurl4-openssl-dev
+  
 # Only if odbc is needed
-# RUN apt-get update && apt-get install -y \
 #  unixodbc \
 #  unixodbc-dev
 
@@ -18,4 +25,4 @@ RUN R -e "renv::restore()"
 
 EXPOSE 3838
 
-CMD ("R", "e", "shiny::runApp('./app.R', host='0.0.0.0', port = 3838)")
+CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port = 3838)"]
