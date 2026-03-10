@@ -8,13 +8,12 @@
 #
 
 library(shiny)
-library(ggsurvfit)
+# library(ggsurvfit)
 library(shinybusy)
-library(dplyr)
 library(future)
 library(promises)
 library(RColorBrewer)
-library(arrow)
+library(ggplot2)
 
 transition_data_default=tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
