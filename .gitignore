@@ -3,8 +3,7 @@ Mockups/
 Testing/
 data/
 rsconnect/
-renv/
-Testing/
+tests/
 outputs/
 
 server_extended.R
@@ -18,3 +17,8 @@ server_extended.R
 
 todo.md
 myNotes.Rmd
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
