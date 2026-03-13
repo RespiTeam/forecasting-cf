@@ -68,9 +68,9 @@ b=c(112, 153, 179, 228)
 
 color_palette = rgb(r,g,b, maxColorValue = 255)
 
-# Define server logic required to draw a histogram
-server <- auth0_server(function(input, output, session) {
-  
+# server <- auth0_server(function(input, output, session) {
+
+server <- function(input, output, session) {  
     #Defining reactive values
     comorList <- reactiveVal(
       groupingComorbiditiesRatios(comorbiRatios, comorbiDescription)
@@ -288,6 +288,6 @@ server <- auth0_server(function(input, output, session) {
     moreSettingsServer("moreSettings", rv, comorList)
     
 }
-)
+# )
 
 

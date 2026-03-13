@@ -73,9 +73,9 @@ respiTheme <- bs_theme(
   code_font = font_google("JetBrains Mono")
 )
 
-ui <- auth0_ui(
-  # Define UI for application that draws a histogram
-  page_navbar(
+# ui <- auth0_ui(page_navbar(
+
+ui <- page_navbar(
     
     header = tagList(
       useShinyjs(),
@@ -274,4 +274,4 @@ ui <- auth0_ui(
       )
     )
   )
-)
+# )

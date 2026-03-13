@@ -5,9 +5,12 @@ library(rlecuyer)
 # library(tidyverse)
 library(lubridate)
 # library(ggplot2)
+library(tidyr)
 library(scales)
 library(arrow)
 library(dplyr)
+library(stringr)
+
 
 source('r/transition_functions.r')
 
@@ -657,7 +660,7 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
   
   for (i in unique(simResults2$iteration)) {
     
-    sp <- summary(survfit2(Surv(enter_time, exit_time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
+    sp <- summary(ggsurvfit::survfit2(Surv(enter_time, exit_time, status) ~ group, data = kmData |> filter(iteration==i)), times = c(seq(0, 90, by = 2)))
     kmResults=bind_rows(kmResults,
                         tibble(time=sp$time, atRisk=sp$n.risk, nEvents=sp$n.event, survival=sp$surv, group=sp$strata, iteration=i)
     )
