@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 #  unixodbc \
 #  unixodbc-dev
 
-ENV RENV_VERSION=v1.0.7
+ENV RENV_VERSION=v1.1.2
 RUN R -e "install.packages('remotes')"
 RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
 # to install from package manager instead of cran for faster installation

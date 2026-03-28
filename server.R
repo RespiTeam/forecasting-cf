@@ -14,8 +14,10 @@ library(future)
 library(promises)
 library(RColorBrewer)
 library(ggplot2)
+library(tibble)
+library(rlang)
 
-transition_data_default=tibble(
+transition_data_default <- tibble::tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
   to = c("Moderate", "Severe","Dead","Mild", "Severe","Dead", "Mild", "Moderate", "Dead","Transplant","Dead"),
   assumptions=c("","","Limited to age > 16 years",
@@ -31,13 +33,13 @@ transition_data_default=tibble(
   Custom = rep(0.5,11)
 )
 
-newcases_ages_data=tibble(
+newcases_ages_data <- tibble(
   age_range=c('0-1','1-2','2-18','18-40'), 
   # prob=c(0.672,0.103,0.155,0.07)
   prob=c(0.677,0.062,0.1405,0.1205)
 )
 
-exacerbations_ratios_default=tibble(
+exacerbations_ratios_default <- tibble(
   state=c('mild','moderate','severe'),
   # cftr=c(0.055,0.55,1.35),
   cftr=c(0.12,0.29,0.49),
@@ -54,7 +56,7 @@ comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(c
 source('r/sim_functions.R')
 source('r/micSim.r')
 source('r/auxFctMicSim.r')
-source('r/myFuns.r')
+source('r/myFuns.R')
 
 plan(multisession)
 

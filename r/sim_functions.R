@@ -10,9 +10,10 @@ library(scales)
 library(arrow)
 library(dplyr)
 library(stringr)
+library(tibble)
 
 
-source('r/transition_functions.r')
+source('r/transition_functions.R')
 
 # Create immigrate population function.
 # new_subjects: The total number of new diagnosed subjects (immigrants) per year
