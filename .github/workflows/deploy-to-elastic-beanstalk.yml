@@ -43,5 +43,15 @@ jobs:
                 "Namespace": "aws:elasticbeanstalk:environment",
                 "OptionName": "ServiceRole",
                 "Value": "aws-elasticbeanstalk-service-role"
+              },
+              {
+                "Namespace": "aws:elasticbeanstalk:managedactions",
+                "OptionName": "ManagedActionsEnabled",
+                "Value": "true"
+              },
+              {
+                "Namespace": "aws:elasticbeanstalk:managedactions:platformupdate",
+                "OptionName": "UpdateLevel",
+                "Value": "minor"
               }
             ]
