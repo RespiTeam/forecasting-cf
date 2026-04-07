@@ -123,7 +123,8 @@ ui <- page_navbar(
     title = "Cystic Fibrosis App",
     
     nav_panel(
-      "Simulation", 
+      "Simulation",
+      icon = icon("glyphicon glyphicon-signal", lib="glyphicon"),
       layout_sidebar(
         sidebar = sidebar(
           #Properties of sidebar"

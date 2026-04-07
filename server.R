@@ -25,10 +25,17 @@ transition_data_default <- tibble::tibble(
                 "","","Limited to age > 16 years","Limited to age > 16 years",
                 "Limited to age > 16 years"
                 ),
-  Coeff = c("I (−3.870427 + 0.0130938 * age)","0","I (−6.26)",
-            "I (−1.323925 − 0.0409952 * age)", "I (−2.259841 - 0.0345258 * age)", "I (−4.477337)",
-            "0","I (−2.599317)","I (−2.766158)","I (−2.0)",
-            "I (−3.218876)"),
+  Coeff = c("I (-3.675 + 0.028 * age - 0.839 * tShort + 0.184 * tLong)",
+            "I (-7.719)",
+            "I (-9.23 + 0.087 * age)",
+            "I (-0.161 - 0.041 * age + 1.324 * tShort -0.890 * tLong )",
+            "I (-2.105 -3.001 * tShort - 0.842 * tLong)",
+            "I (-21.84 + 0.25 * age)",
+            "I (-15.315 -0.161 * age + 18.062 * tShort + 15.371 * tLong)",
+            "I (-1.126 + 1.034 * tShort - 0.387 * tLong)",
+            "I (-4.69 + 0.0368 * age)",
+            "I (-3.061 + 0.008 * age - 19.820 * tShort - 19.809 * tLong)",
+            "I (-3.308 + 0.013 * age)"),
   Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.7, 0.9, 0),
   Custom = rep(0.5,11)
 )

@@ -24,6 +24,12 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Check disk usage
+        run: df -h
+        
+      - name: Remove unused Docker images
+        run: docker system prune -af
 
       - name: Deploy to Elastic Beanstalk
         uses: aws-actions/aws-elasticbeanstalk-deploy@v1.0.0
@@ -31,7 +37,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           application-name: ${{ env.APPLICATION_NAME }}
           environment-name: ${{ env.ENVIRONMENT_NAME }}
-          solution-stack-name: '64bit Amazon Linux 2023 v4.12.0 running Python 3.12'
+          solution-stack-name: '64bit Amazon Linux 2023 v4.12.0 running Docker'
           option-settings: |
             [
               {
