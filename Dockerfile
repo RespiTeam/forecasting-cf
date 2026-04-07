@@ -18,10 +18,21 @@ RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
 # to install from package manager instead of cran for faster installation
 RUN R -e "options(renv.config.repos.override = 'https://packagemanager.posit.co/cran/latest')"
 
-COPY . /app
-WORKDIR /app
+# ---- CACHING STRATEGY STARTS HERE ----
 
+# 1. Copy ONLY the lockfile first. This file defines your dependencies.
+# This layer will only be invalidated if you change renv.lock.
+COPY renv.lock .
+
+# 2. Run renv::restore() to install all the packages.
+# This expensive step will now be cached most of the time!
 RUN R -e "renv::restore()"
+
+# 3. NOW copy the rest of your application code.
+# Changing your R scripts will only invalidate this cache and subsequent layers.
+COPY . .
+
+# ---- END OF CACHING STRATEGY ----
 
 EXPOSE 3838
 
