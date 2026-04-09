@@ -16,6 +16,16 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Free disk space
+        uses: EriksenCarl/free-disk-space-action@v1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          swift: true
+          docker-images: false   # keep this false, you need Docker for EB packaging
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -25,7 +35,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
           
-      - name: Check disk usage
+      - name: Check disk usage after cleanup
         run: df -h
         
       - name: Remove unused Docker images
