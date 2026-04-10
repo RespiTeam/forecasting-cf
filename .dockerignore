@@ -1,14 +1,12 @@
 
-Mockups/
-Testing/
-rsconnect/
-tests/
-outputs/
-
 .git
-.Rhistory
-.Rproj.user
+.gitignore
+README.md
 renv/library
 renv/local
+
 Dockerfile
 .dockerignore
+
+/information
+/tests
