@@ -26,12 +26,14 @@ WORKDIR /app
 # This layer will only be invalidated if you change renv.lock.
 COPY renv.lock .
 
+RUN R -e "renv::activate()"
+
 # 2. Run renv::restore() to install all the packages.
 # This expensive step will now be cached most of the time!
 RUN R -e "renv::restore()"
 
 # Purge renv download cache to save ~1-2GB in the final image
-RUN R -e "renv::purge()"
+# RUN R -e "renv::purge()"
 
 # 3. NOW copy the rest of your application code.
 # Changing your R scripts will only invalidate this cache and subsequent layers.
@@ -41,4 +43,4 @@ COPY . .
 
 EXPOSE 3838
 
-CMD ["R", "-e", "shiny::runApp('/app', host='0.0.0.0', port = 3838)"]
+CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port = 3838)"]

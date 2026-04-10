@@ -2,8 +2,6 @@
 .git
 .gitignore
 README.md
-renv/library
-renv/local
 
 Dockerfile
 .dockerignore
