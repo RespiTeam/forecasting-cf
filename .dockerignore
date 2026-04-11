@@ -1,3 +1,13 @@
+data
+rsconnect
+tests
+outputs
+information
+
+# These files are not included in .gitignore because they are omitted for the .gitignore file inside renv folder
+renv/library
+renv/staging
+renv/.gitignore
 
 .git
 .gitignore
@@ -5,6 +15,3 @@ README.md
 
 Dockerfile
 .dockerignore
-
-/information
-/tests

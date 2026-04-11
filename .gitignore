@@ -17,8 +17,3 @@ server_extended.R
 
 todo.md
 myNotes.Rmd
-
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
