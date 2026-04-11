@@ -1,0 +1,19 @@
+
+# data folder is not excluded
+Mockups/
+Testing/
+rsconnect/
+tests/
+outputs/
+
+server_extended.R
+
+.Renviron
+.Rproj.user
+
+.DS_Store
+.RData
+.Rhistory
+
+todo.md
+myNotes.Rmd
