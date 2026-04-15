@@ -20,7 +20,8 @@ RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
 RUN R -e "options(renv.config.repos.override = 'https://packagemanager.posit.co/cran/latest')"
 
 # 3. Set working directory
-WORKDIR /app
+#WORKDIR  /srv/shiny-server/cf-app
+WORKDIR  cf-app
 
 # ---- CACHING STRATEGY STARTS HERE ----
 # 1. Copy ONLY the lockfile first. This file defines your dependencies.
@@ -52,6 +53,8 @@ RUN mkdir outputs
 #    curl -fsSL "$COMOR_DES_URL" -o data/ComorbiditiesDescription.csv && \
 #    curl -fsSL "$COMOR_RATIOS_URL" -o data/commorbidities_ratios.csv
 
-EXPOSE 8080
+EXPOSE 3838
 
-CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT','8080')))"]
+# CMD ["/init"]
+
+CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=3838)"]

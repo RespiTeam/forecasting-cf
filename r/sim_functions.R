@@ -35,16 +35,16 @@ build_immigr_pop<- function(start_date=as.Date("2020-01-01"), end_date=as.Date("
   )
   
   # ages 0-1
-  immigrPop0 <- immigrAgeGroupGeneration(Id=1, inmigr_probs, 0,1, n_years) 
+  immigrPop0 <- immigrAgeGroupGeneration(Id=1, inmigr_probs, 0,1, n_years, start_date, end_date) 
     
   # ages 1-2
-  immigrPop1 <- immigrAgeGroupGeneration(Id=2, inmigr_probs, 1,2, n_years) 
+  immigrPop1 <- immigrAgeGroupGeneration(Id=2, inmigr_probs, 1,2, n_years, start_date, end_date) 
   
   # ages 2-18
-  immigrPop2 <- immigrAgeGroupGeneration(Id=3, inmigr_probs, 2,18, n_years) 
+  immigrPop2 <- immigrAgeGroupGeneration(Id=3, inmigr_probs, 2,18, n_years, start_date, end_date) 
   
   # ages 18-40
-  immigrPop3 <- immigrAgeGroupGeneration(Id=4, inmigr_probs, 18,40, n_years)
+  immigrPop3 <- immigrAgeGroupGeneration(Id=4, inmigr_probs, 18,40, n_years, start_date, end_date)
     
   # joining the migration groups in one dataframe
   #immigrPop <- rbind(immigrPop0, immigrPop1, immigrPop2, immigrPop3)
@@ -856,7 +856,7 @@ formattingForSummary2 <- function(initData_cftr,popcftr_long,initData_0cftr,pop0
   
 }
 
-immigrAgeGroupGeneration <- function(Id, inmigr_probs, minAge, maxAge, n_years) {
+immigrAgeGroupGeneration <- function(Id, inmigr_probs, minAge, maxAge, n_years, start_date, end_date) {
   
   ageRange=paste(minAge,"-",maxAge, sep="")
   

@@ -61,7 +61,7 @@ outputServer <- function(id, r, colorPalette, comorList, comorbidityChoices) {
         fullData <- arrow::read_parquet(r$dataPath)
         # Now, copy our temporary file to the path Shiny expects.
         arrow::write_parquet(fullData, file)
-      },
+      }
       
     )
     

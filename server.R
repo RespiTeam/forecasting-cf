@@ -65,7 +65,7 @@ source('r/micSim.r')
 source('r/auxFctMicSim.r')
 source('r/myFuns.R')
 
-plan(multisession)
+# future::plan(multisession)
 
 # Creating gray scale palette
 grey_palette = brewer.pal(9, 'Greys')
@@ -76,6 +76,8 @@ g=c(75, 129, 166, 127)
 b=c(112, 153, 179, 228)
 
 color_palette = rgb(r,g,b, maxColorValue = 255)
+
+print('before server')
 
 # server <- auth0_server(function(input, output, session) {
 
@@ -156,19 +158,19 @@ server <- function(input, output, session) {
       newCasesF508 <- rv$new_F508
       newCases0F508 <- rv$new_0F508
       
-      future({
+      # future({
         
-        start_time=format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-        dataList=iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, newCasesF508, newCases0F508, verDF508, dist_ages_newcases)
-        end_time=format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        start_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+        dataList <- iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, newCasesF508, newCases0F508, verDF508, dist_ages_newcases)
+        end_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
         
-        dataList$times=paste("Simulation computed from ",start_time," to ",end_time)
+        dataList$times <- paste("Simulation computed from ",start_time," to ",end_time)
         
-        return(dataList)
+        # return(dataList)
         
-      }, seed=TRUE) %...>% (
-        function(result) {
-          dataList=result
+      # }, seed=TRUE) %...>% (
+        # function(result) {
+          # dataList=result
           
           # Preprocessing simulation results
           dataList$qty <- dataList$qty |> mutate(
@@ -217,15 +219,13 @@ server <- function(input, output, session) {
           
           remove_modal_gif()
           
-        }
-      ) %...!% (
-        function(error) {
-          remove_modal_gif()
-          stop(error)
-        }
-      )
-        
-      # } Validation if
+      #   }
+      # ) %...!% (
+      #   function(error) {
+      #     remove_modal_gif()
+      #     stop(error)
+      #   }
+      # )
       
     }) |> 
       bindEvent(input$runSim)
