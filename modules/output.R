@@ -58,9 +58,9 @@ outputServer <- function(id, r, colorPalette, comorList, comorbidityChoices) {
       
       # b) `content` is a function that creates and writes the file.
       content = function(file) {
-        fullData <- arrow::read_parquet(r$dataPath)
+        fullData <- read.csv(r$dataPath)
         # Now, copy our temporary file to the path Shiny expects.
-        arrow::write_parquet(fullData, file)
+        write.csv(fullData, file)
       }
       
     )

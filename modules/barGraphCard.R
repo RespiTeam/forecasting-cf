@@ -78,19 +78,19 @@ barGraphCardServer <- function(id, r, colorPalette, targetVar, labY) {
           fill = state
         )) +
         ggplot2::geom_bar(position = "stack", stat = "identity") +
-        ggplot2::theme_classic()
-      labs(y = labY, x = "", fill = "") +
-      theme(legend.position = "bottom")+
-      theme(
-        legend.text = element_text(size = 14),  # Adjust the size as needed
-        axis.text.x = element_text(size = 14),
-        axis.text.y = element_text(size = 14)
-      )+
-      scale_fill_manual(values=colorPalette)+
-      geom_text(aes(label = round(outcome,0)),
-                position = position_stack(vjust = 0.5),  # centers each label
-                color = "white",
-                size = 4)
+        ggplot2::theme_classic() +
+        labs(y = labY, x = "", fill = "") +
+        theme(legend.position = "bottom")+
+        theme(
+          legend.text = element_text(size = 14),  # Adjust the size as needed
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14)
+        )+
+        scale_fill_manual(values=colorPalette)+
+        geom_text(aes(label = round(outcome,0)),
+                  position = position_stack(vjust = 0.5),  # centers each label
+                  color = "white",
+                  size = 4)
 
     })
     

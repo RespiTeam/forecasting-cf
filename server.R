@@ -65,7 +65,7 @@ source('r/micSim.r')
 source('r/auxFctMicSim.r')
 source('r/myFuns.R')
 
-# future::plan(multisession)
+plan(multisession)
 
 # Creating gray scale palette
 grey_palette = brewer.pal(9, 'Greys')
@@ -158,7 +158,7 @@ server <- function(input, output, session) {
       newCasesF508 <- rv$new_F508
       newCases0F508 <- rv$new_0F508
       
-      # future({
+      future({
         
         start_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
         dataList <- iteratingSimulations2(initial_data, start_date, end_date, nIter, period_length, newCasesF508, newCases0F508, verDF508, dist_ages_newcases)
@@ -166,11 +166,11 @@ server <- function(input, output, session) {
         
         dataList$times <- paste("Simulation computed from ",start_time," to ",end_time)
         
-        # return(dataList)
+        return(dataList)
         
-      # }, seed=TRUE) %...>% (
-        # function(result) {
-          # dataList=result
+      }, seed=TRUE) %...>% (
+      function(result) {
+          dataList=result
           
           # Preprocessing simulation results
           dataList$qty <- dataList$qty |> mutate(
@@ -219,13 +219,13 @@ server <- function(input, output, session) {
           
           remove_modal_gif()
           
-      #   }
-      # ) %...!% (
-      #   function(error) {
-      #     remove_modal_gif()
-      #     stop(error)
-      #   }
-      # )
+        }
+      ) %...!% (
+        function(error) {
+          remove_modal_gif()
+          stop(error)
+        }
+      )
       
     }) |> 
       bindEvent(input$runSim)

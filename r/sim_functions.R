@@ -7,7 +7,7 @@ library(lubridate)
 # library(ggplot2)
 library(tidyr)
 library(scales)
-library(arrow)
+# library(arrow)
 library(dplyr)
 library(stringr)
 library(tibble)
@@ -417,8 +417,8 @@ iteratingSimulations2 <- function(data, start_date, end_date, nIter, period_leng
   #     arrange(lastState)
   #   )
   
-  tempDataPath <- tempfile(fileext = ".parquet")
-  arrow::write_parquet(simResults, tempDataPath)
+  tempDataPath <- tempfile(fileext = ".csv")
+  write.csv(simResults, tempDataPath)
   
   # Building summarize results
   summarizeResults=buildingSummarizeData(simResults, start_date)
@@ -656,7 +656,7 @@ buildingSummarizeKMData <- function(simResults2, end_date) {
     facet_grid(group ~ .)+
     labs(x="Exit time (age)", y="NUmber of deaths")
   
-  ggsave("outputs/hist_deaths.png")
+  # ggsave("outputs/hist_deaths.png")
   
   
   for (i in unique(simResults2$iteration)) {
@@ -729,7 +729,7 @@ buildingSummarizeKMDataAll <- function(simResults2, end_date) {
     facet_grid(group ~ .)+
     labs(x="Exit time (age)", y="NUmber of deaths")
   
-  ggsave("outputs/hist_deaths.png")
+  # ggsave("outputs/hist_deaths.png")
   
   
   for (i in unique(simResults2$iteration)) {

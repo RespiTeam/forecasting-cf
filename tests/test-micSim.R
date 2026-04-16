@@ -1,10 +1,10 @@
 
 
-source('r/auxFctMicSim.R')
+source('r/auxFctMicSim.r')
 source('r/micSim.r')
-source('r/sim_functions.r')
-source('r/transition_functions.r')
-source('r/micSim_respi.r')
+source('r/sim_functions.R')
+source('r/transition_functions.R')
+source('r/micSim_respi.R')
 
 #getNextStep
 
