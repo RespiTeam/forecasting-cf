@@ -18,7 +18,9 @@
             # account and application name (https://<accountName>.shinyapps.io/<appName>)
             appName: forecasting-cf
             accountName: linusgun
+            forceUpdate: TRUE
   
             # token and secret created on Apr 17, 2026
             accountToken: ${{ secrets.SHINYAPPS_TOKEN }}
             accountSecret: ${{ secrets.SHINYAPPS_SECRET }}
+            
