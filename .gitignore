@@ -7,6 +7,7 @@ tests/
 outputs/
 
 server_extended.R
+database_builder.R
 
 .Renviron
 .Rproj.user

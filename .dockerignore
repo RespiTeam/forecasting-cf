@@ -2,6 +2,7 @@ rsconnect
 tests
 outputs
 information
+data
 
 # These files are not included in .gitignore because they are omitted for the .gitignore file inside renv folder
 renv/library
@@ -15,3 +16,9 @@ README.md
 
 Dockerfile
 .dockerignore
+.Renviron
+.Rproj.user
+
+.DS_Store
+.RData
+.Rhistory

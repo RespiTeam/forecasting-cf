@@ -15,9 +15,11 @@
         - name: Build image
           run: >
             docker build -t cf-app .
-            --build-arg HTTR_KEY=${{ secrets.SHINYAPPS_TOKEN }}
-            --build-arg DB_PASS=${{ secrets.SHINYAPPS_TOKEN }}
-            --build-arg DB_USER=${{ secrets.SHINYAPPS_TOKEN }}
+            --build-arg DB_NAME=${{ secrets.DB_NAME }}
+            --build-arg DB_USER=${{ secrets.DB_USER }}
+            --build-arg DB_HOST=${{ secrets.DB_HOST }}
+            --build-arg DB_PASS=${{ secrets.DB_PASS }}
+            --build-arg DB_PORT=${{ secrets.DB_PORT }}
             
         - name: Run container
           run: >

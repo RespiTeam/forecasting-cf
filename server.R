@@ -16,6 +16,24 @@ library(RColorBrewer)
 library(ggplot2)
 library(tibble)
 library(rlang)
+library(DBI)
+
+readRenviron(".Renviron")
+
+pg_conn <- dbConnect(
+  RPostgres::Postgres(),
+  dbname = Sys.getenv("DB_NAME"),
+  host = Sys.getenv("DB_HOST"),
+  port = Sys.getenv("DB_PORT"),
+  user = Sys.getenv("DB_USER"),
+  password = Sys.getenv("DB_PASS")
+)
+
+inital_data_default <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_init_pop")
+comorbiRatios <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_ratios")
+comorbiDescription <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_desc")
+
+comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(comorbiDescription$Description)
 
 transition_data_default <- tibble::tibble(
   from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
@@ -52,12 +70,6 @@ exacerbations_ratios_default <- tibble(
   cftr=c(0.12,0.29,0.49),
   non_cftr=c(0.17,0.73,1.12)
 )
-
-inital_data_default <- read.csv(file = "data/initPop.csv")
-comorbiRatios <- read.csv(file = "data/commorbidities_ratios.csv")
-comorbiDescription <- read.csv(file = "data/ComorbiditiesDescription.csv")
-
-comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(comorbiDescription$Description)
 
 #Loading the simulation core functions
 source('r/sim_functions.R')
