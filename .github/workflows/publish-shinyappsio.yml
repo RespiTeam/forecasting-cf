@@ -22,7 +22,7 @@
         - name: Run container
           run: >
             docker run
-            -e SHINYAPPS_ACCOUNT=${{ secrets.SHINYAPPS_TOKEN }}
+            -e SHINYAPPS_ACCOUNT=${{ secrets.SHINYAPPS_ACCOUNT }}
             -e SHINYAPPS_TOKEN=${{ secrets.SHINYAPPS_TOKEN }}
             -e SHINYAPPS_SECRET=${{ secrets.SHINYAPPS_SECRET }}
             cf-app
