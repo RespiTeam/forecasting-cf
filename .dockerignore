@@ -10,6 +10,7 @@ renv/.gitignore
 
 .git
 .gitignore
+.github
 README.md
 
 Dockerfile

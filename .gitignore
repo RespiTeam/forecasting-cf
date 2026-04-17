@@ -17,6 +17,3 @@ server_extended.R
 
 todo.md
 myNotes.Rmd
-
-Dockerfile
-.dockerignore
