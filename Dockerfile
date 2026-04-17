@@ -25,9 +25,9 @@ WORKDIR  /app
 # ---- CACHING STRATEGY STARTS HERE ----
 # 1. Copy ONLY the lockfile first. This file defines your dependencies.
 # This layer will only be invalidated if you change renv.lock.
-COPY renv.lock .
 
-RUN R -e "renv::activate()"
+COPY renv .
+COPY renv.lock .
 
 # 2. Run renv::restore() to install all the packages.
 # This expensive step will now be cached most of the time!
