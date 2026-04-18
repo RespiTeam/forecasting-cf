@@ -47,6 +47,9 @@ RUN R -e "renv::restore()"
 # Changing your R scripts will only invalidate this cache and subsequent layers.
 COPY . .
 
+RUN R -e "renv::status()"
+RUN R -e "renv::snapshot()"
+
 RUN echo "DB_NAME=${DB_NAME}" \
   >> ./.Renviron \
   && echo "DB_USER=${DB_USER}" \
