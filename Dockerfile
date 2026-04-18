@@ -64,4 +64,4 @@ RUN echo "DB_NAME=${DB_NAME}" \
 # CMD ["R", "-e", "shiny::runApp(host='0.0.0.0', port=3838)"]
 
 # For deploying in shinyappsio
-CMD Rscript deploy.R
+CMD ["Rscript", "deploy.R"]
