@@ -21,7 +21,7 @@
             --build-arg DB_PASS=${{ secrets.DB_PASS }}
             --build-arg DB_PORT=${{ secrets.DB_PORT }}
             
-        - name: Run container
+        - name: Execute
           run: >
             docker run
             -e SHINYAPPS_ACCOUNT=${{ secrets.SHINYAPPS_ACCOUNT }}
