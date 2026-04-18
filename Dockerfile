@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
 #  curl ca-certificates && rm -rf /var/lib/apt/lists/*
 # Only if odbc is needed
   unixodbc \
-  unixodbc-dev
+  unixodbc-dev \
+  pandoc
 
 ARG DB_NAME
 ARG DB_USER
