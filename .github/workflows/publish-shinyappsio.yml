@@ -1,4 +1,5 @@
-  name: shinyapps-publish
+
+name: shinyapps-publish
 
 on:
   push:
