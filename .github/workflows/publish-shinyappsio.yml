@@ -1,31 +1,49 @@
   name: shinyapps-publish
-  on:
-    push:
-      branches: [dev]
-  
-  jobs:
-    deploy: 
-      name: Deploy to shinyappsio
 
-      # allow skipping deployment for commits containing '[automated]' or '[no-deploy]' in the commit message
-      if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-deploy]')"
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v6
-        - name: Build image
-          run: >
-            docker build -t cf-app .
-            --build-arg DB_NAME=${{ secrets.DB_NAME }}
-            --build-arg DB_USER=${{ secrets.DB_USER }}
-            --build-arg DB_HOST=${{ secrets.DB_HOST }}
-            --build-arg DB_PASS=${{ secrets.DB_PASS }}
-            --build-arg DB_PORT=${{ secrets.DB_PORT }}
-            
-        - name: Execute
-          run: >
-            docker run
-            -e SHINYAPPS_ACCOUNT=${{ secrets.SHINYAPPS_ACCOUNT }}
-            -e SHINYAPPS_TOKEN=${{ secrets.SHINYAPPS_TOKEN }}
-            -e SHINYAPPS_SECRET=${{ secrets.SHINYAPPS_SECRET }}
-            cf-app
-            
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    name: Deploy to shinyapps.io
+    if: "!contains(github.event.head_commit.message, '[automated]') &&!contains(github.event.head_commit.message, '[no-deploy]')"
+    runs-on: ubuntu-latest
+
+    env:
+      # make renv faster and non-interactive
+      RENV_CONFIG_CACHE_ENABLED: "TRUE"
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup R 4.4.3
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.4.3'
+          use-public-rspm: true
+
+      - name: Setup Pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev libssl-dev libcurl4-openssl-dev libxml2-dev zlib1g-dev unixodbc unixodbc-dev pandoc
+
+      - name: Setup renv
+        uses: r-lib/actions/setup-renv@v2
+        with:
+          cache-version: 1.1.2
+
+      - name: Restore packages
+        run: Rscript -e 'renv::restore(prompt = FALSE)'
+
+      - name: Deploy to shinyapps.io
+        env:
+          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT }}
+          SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
+          SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
+          
+        run: Rscript deploy.R
