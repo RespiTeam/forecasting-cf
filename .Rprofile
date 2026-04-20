@@ -1,3 +1,7 @@
 source("renv/activate.R")
 
-options(renv.config.repos.override = NULL)
+# .Rprofile in project root
+options(repos = c(
+  PPM = "https://packagemanager.posit.co/cran/latest",  # change for Linux if needed
+  CRAN = "https://cloud.r-project.org"                  # fallback
+))
