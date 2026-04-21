@@ -74,24 +74,13 @@ respiTheme <- bs_theme(
   code_font = font_google("JetBrains Mono")
 )
 
-# ui <- auth0_ui(page_navbar(
+ui <- auth0_ui(page_navbar(
 
-ui <- page_navbar(
+# ui <- page_navbar(
   
     header = tagList(
       useShinyjs(),
       useWaiter(),
-      useHostess(),
-      waiterShowOnLoad(
-        color = "#f7fff7",
-        hostess_loader(
-          "loader", 
-          preset = "circle", 
-          text_color = "black",
-          class = "label-center",
-          center_page = TRUE
-        )
-      ),
       tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
         # tags$link(
@@ -290,4 +279,4 @@ ui <- page_navbar(
       )
     )
   )
-# )
+)

@@ -18,83 +18,87 @@ library(tibble)
 library(rlang)
 library(DBI)
 
-readRenviron(".Renviron")
+server <- auth0_server(function(input, output, session) {
 
-pg_conn <- dbConnect(
-  RPostgres::Postgres(),
-  dbname = Sys.getenv("DB_NAME"),
-  host = Sys.getenv("DB_HOST"),
-  port = Sys.getenv("DB_PORT"),
-  user = Sys.getenv("DB_USER"),
-  password = Sys.getenv("DB_PASS")
-)
-
-inital_data_default <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_init_pop")
-comorbiRatios <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_ratios")
-comorbiDescription <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_desc")
-
-comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(comorbiDescription$Description)
-
-transition_data_default <- tibble::tibble(
-  from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
-  to = c("Moderate", "Severe","Dead","Mild", "Severe","Dead", "Mild", "Moderate", "Dead","Transplant","Dead"),
-  assumptions=c("","","Limited to age > 16 years",
-                "","","Limited to age > 16 years",
-                "","","Limited to age > 16 years","Limited to age > 16 years",
-                "Limited to age > 16 years"
-                ),
-  Coeff = c("I (-3.675 + 0.028 * age - 0.839 * tShort + 0.184 * tLong)",
-            "I (-7.719)",
-            "I (-9.23 + 0.087 * age)",
-            "I (-0.161 - 0.041 * age + 1.324 * tShort -0.890 * tLong )",
-            "I (-2.105 -3.001 * tShort - 0.842 * tLong)",
-            "I (-21.84 + 0.25 * age)",
-            "I (-15.315 -0.161 * age + 18.062 * tShort + 15.371 * tLong)",
-            "I (-1.126 + 1.034 * tShort - 0.387 * tLong)",
-            "I (-4.69 + 0.0368 * age)",
-            "I (-3.061 + 0.008 * age - 19.820 * tShort - 19.809 * tLong)",
-            "I (-3.308 + 0.013 * age)"),
-  Custom = rep(0.5,11)
-)
-
-newcases_ages_data <- tibble(
-  age_range=c('0-1','1-2','2-18','18-40'), 
-  # prob=c(0.672,0.103,0.155,0.07)
-  prob=c(0.677,0.062,0.1405,0.1205)
-)
-
-exacerbations_ratios_default <- tibble(
-  state=c('mild','moderate','severe'),
-  # cftr=c(0.055,0.55,1.35),
-  cftr=c(0.12,0.29,0.49),
-  non_cftr=c(0.17,0.73,1.12)
-)
-
-#Loading the simulation core functions
-source('r/sim_functions.R')
-source('r/micSim.r')
-source('r/auxFctMicSim.r')
-source('r/myFuns.R')
-
-plan(multisession)
-
-# Creating gray scale palette
-grey_palette = brewer.pal(9, 'Greys')
-
-# Creating color palette
-r=c(2, 17, 111, 253)
-g=c(75, 129, 166, 127)
-b=c(112, 153, 179, 228)
-
-color_palette = rgb(r,g,b, maxColorValue = 255)
-
-# server <- auth0_server(function(input, output, session) {
-
-server <- function(input, output, session) {  
+# server <- function(input, output, session) {  
   
-  hostess <- Hostess$new("loader")
-  
-    #Defining reactive values
+    w <- Waiter$new()
+    w$show()
+    
+    # Loading data and creating initial variables ------
+    
+    readRenviron(".Renviron")
+    
+    pg_conn <- dbConnect(
+      RPostgres::Postgres(),
+      dbname = Sys.getenv("DB_NAME"),
+      host = Sys.getenv("DB_HOST"),
+      port = Sys.getenv("DB_PORT"),
+      user = Sys.getenv("DB_USER"),
+      password = Sys.getenv("DB_PASS")
+    )
+    
+    inital_data_default <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_init_pop")
+    comorbiRatios <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_ratios")
+    comorbiDescription <- dbGetQuery(pg_conn, "SELECT * FROM cf_app_comor_desc")
+    
+    comorbiditiesNamesValues <- as.list(comorbiDescription$Variable) %>% set_names(comorbiDescription$Description)
+    
+    transition_data_default <- tibble::tibble(
+      from = c("Mild", "Mild","Mild","Moderate","Moderate","Moderate", "Severe", "Severe","Severe","Severe", "Transplant"),
+      to = c("Moderate", "Severe","Dead","Mild", "Severe","Dead", "Mild", "Moderate", "Dead","Transplant","Dead"),
+      assumptions=c("","","Limited to age > 16 years",
+                    "","","Limited to age > 16 years",
+                    "","","Limited to age > 16 years","Limited to age > 16 years",
+                    "Limited to age > 16 years"
+      ),
+      Coeff = c("I (-3.675 + 0.028 * age - 0.839 * tShort + 0.184 * tLong)",
+                "I (-7.719)",
+                "I (-9.23 + 0.087 * age)",
+                "I (-0.161 - 0.041 * age + 1.324 * tShort -0.890 * tLong )",
+                "I (-2.105 -3.001 * tShort - 0.842 * tLong)",
+                "I (-21.84 + 0.25 * age)",
+                "I (-15.315 -0.161 * age + 18.062 * tShort + 15.371 * tLong)",
+                "I (-1.126 + 1.034 * tShort - 0.387 * tLong)",
+                "I (-4.69 + 0.0368 * age)",
+                "I (-3.061 + 0.008 * age - 19.820 * tShort - 19.809 * tLong)",
+                "I (-3.308 + 0.013 * age)"),
+      Custom = rep(0.5,11)
+    )
+    
+    newcases_ages_data <- tibble(
+      age_range=c('0-1','1-2','2-18','18-40'), 
+      # prob=c(0.672,0.103,0.155,0.07)
+      prob=c(0.677,0.062,0.1405,0.1205)
+    )
+    
+    exacerbations_ratios_default <- tibble(
+      state=c('mild','moderate','severe'),
+      # cftr=c(0.055,0.55,1.35),
+      cftr=c(0.12,0.29,0.49),
+      non_cftr=c(0.17,0.73,1.12)
+    )
+    
+    #Loading the simulation core functions
+    source('r/sim_functions.R')
+    source('r/micSim.r')
+    source('r/auxFctMicSim.r')
+    source('r/myFuns.R')
+    
+    plan(multisession)
+    
+    # Creating gray scale palette
+    grey_palette = brewer.pal(9, 'Greys')
+    
+    # Creating color palette
+    r=c(2, 17, 111, 253)
+    g=c(75, 129, 166, 127)
+    b=c(112, 153, 179, 228)
+    
+    color_palette = rgb(r,g,b, maxColorValue = 255)
+    
+    
+    # Defining reactive values ------
     comorList <- reactiveVal(
       groupingComorbiditiesRatios(comorbiRatios, comorbiDescription)
       )
@@ -306,9 +310,9 @@ server <- function(input, output, session) {
     outputServer("simResults", rv, color_palette, comorList, comorbiditiesNamesValues)
     moreSettingsServer("moreSettings", rv, comorList)
  
-    waiter_hide()
+    w$hide()
        
 }
-# )
+)
 
 

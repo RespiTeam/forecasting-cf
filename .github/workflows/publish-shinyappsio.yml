@@ -26,6 +26,9 @@ jobs:
           RENV_CONFIG_PPM_SNAPSHOT=FALSE
 
           # ---- app secrets ----
+          AUTH0_USER=${{ secrets.AUTH0_USER }}
+          AUTH0_KEY=${{ secrets.AUTH0_KEY }}
+          AUTH0_SECRET=${{ secrets.AUTH0_SECRET }}
           DB_HOST=${{ secrets.DB_HOST }}
           DB_NAME=${{ secrets.DB_NAME }}
           DB_USER=${{ secrets.DB_USER }}

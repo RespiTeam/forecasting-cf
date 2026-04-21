@@ -759,7 +759,7 @@ initial_data_validation <- function(df) {
   valid=TRUE
   msg=""
   #columns names 
-  if (sum(names(df) %in% c("ID","birthDate","cftr","initState"))!=4) {
+  if (sum(names(df) %in% c("ID","birthDate","cftr","initState","cftrStart"))!=5) {
     valid=FALSE
     msg="Error in columns names"
     return(
