@@ -54,7 +54,6 @@ transition_data_default <- tibble::tibble(
             "I (-4.69 + 0.0368 * age)",
             "I (-3.061 + 0.008 * age - 19.820 * tShort - 19.809 * tLong)",
             "I (-3.308 + 0.013 * age)"),
-  Optimistic = c(1, 1, 1, 0, 1, 1, 0, 0, 0.7, 0.9, 0),
   Custom = rep(0.5,11)
 )
 
@@ -89,11 +88,12 @@ b=c(112, 153, 179, 228)
 
 color_palette = rgb(r,g,b, maxColorValue = 255)
 
-print('before server')
-
 # server <- auth0_server(function(input, output, session) {
 
 server <- function(input, output, session) {  
+  
+  hostess <- Hostess$new("loader")
+  
     #Defining reactive values
     comorList <- reactiveVal(
       groupingComorbiditiesRatios(comorbiRatios, comorbiDescription)
@@ -243,25 +243,24 @@ server <- function(input, output, session) {
       bindEvent(input$runSim)
     
     
-    observeEvent(input$scenarios, {
+    observe({
       
-      choices = c('Pessimistic','Optimistic', 'Custom')
+      choices = c('Evidence-based', 'Custom')
       selected_col <- match(input$scenarios, choices)
       
       if (selected_col==1) rv$erDF508=rep(0,10)
       else  rv$erDF508=as.numeric(rv$transition_data[,selected_col+3] |> pull())
 
     
-    })
+    }) |> bindEvent(input$scenarios)
     
     # Transitions table
     output$transitions_table=renderDT(
       rv$transition_data, 
-      editable = list(target = "cell", disable = list(columns = c(1, 2, 3,4))),
-      colnames = c("From", "To", "Assumptions", 
-                   "Transition coefficients estimated in 2021 based on conservative effectiveness of CFTR modulators", 
-                   "Optimistic reduction in transition probability based con contemporary evidence", 
-                   "Custom reduction in transition probability"),
+      editable = list(target = "cell", disable = list(columns = c(1, 2, 3, 4))),
+      colnames = c("From", "To", "Assumptions",
+                   "Transition equation", 
+                   "Custom reduction"),
       rownames = FALSE,
       selection = 'none',
       options = list(
@@ -290,10 +289,9 @@ server <- function(input, output, session) {
         output$transitions_table=renderDT(
           rv$transition_data, 
           editable = list(target = "cell", disable = list(columns = c(1, 2, 3, 4))),
-          colnames = c("From", "To", "Assumptions", 
-                       "Transition coefficients estimated in 2021 based on conservative effectiveness of CFTR modulators", 
-                       "Optimistic reduction in transition probability based con contemporary evidence", 
-                       "Custom reduction in transition probability"),
+          colnames = c("From", "To","Assumptions",
+                       "Transition equation",
+                       "Custom reduction"),
           rownames = FALSE,
           selection = 'none',
           options = list(dom = 't'),
@@ -307,7 +305,9 @@ server <- function(input, output, session) {
     
     outputServer("simResults", rv, color_palette, comorList, comorbiditiesNamesValues)
     moreSettingsServer("moreSettings", rv, comorList)
-    
+ 
+    waiter_hide()
+       
 }
 # )
 

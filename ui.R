@@ -16,6 +16,7 @@ library(htmltools)
 library(DT)
 library(auth0)
 library(shinyWidgets)
+library(waiter)
 
 source("modules/transitionRatesTab.R")
 source("modules/moreSettings.R")
@@ -76,9 +77,21 @@ respiTheme <- bs_theme(
 # ui <- auth0_ui(page_navbar(
 
 ui <- page_navbar(
-    
+  
     header = tagList(
       useShinyjs(),
+      useWaiter(),
+      useHostess(),
+      waiterShowOnLoad(
+        color = "#f7fff7",
+        hostess_loader(
+          "loader", 
+          preset = "circle", 
+          text_color = "black",
+          class = "label-center",
+          center_page = TRUE
+        )
+      ),
       tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
         # tags$link(
@@ -139,9 +152,9 @@ ui <- page_navbar(
             choiceNames = list(
               HTML(
                 "<span class='py-3 pe-5'>
-                          <strong class='fw-semibold'>Use 2021 Canadian CF Population</strong>
+                          <strong class='fw-semibold'>Use 2023 Canadian CF Population</strong>
                           <span class='d-block small opacity-75'>The baseline demographics age distribution and disease severity
-                          of the Canadian cystic fibrosis population in 2021 will be used. For further details please see the
+                          of the Canadian cystic fibrosis population in 2023 will be used. For further details please see the
                           Canadian CF registry report or file attached here</span>
                         </span>"
               ),
@@ -231,7 +244,7 @@ ui <- page_navbar(
           selectInput(
             "scenarios",
             label = "Use percentages from",
-            choices = c('Pessimistic', 'Optimistic', 'Custom'),
+            choices = c('Evidence-based', 'Custom'),
           ),
           
           span(
@@ -251,7 +264,9 @@ ui <- page_navbar(
           
           actionButton("runSim", "Run Simulations"),
           tags$div(
-            tags$img(src = "icons8-github-24.png"),
+            HTML(
+              "<a href='https://github.com/RespiTeam/forecasting-cf'> <img src='icons8-github-24.png' alt='Github repository link'> </a>"
+            ),
             tags$br(),
             "Respiratory Epidemiology Research Team",
             tags$br(),

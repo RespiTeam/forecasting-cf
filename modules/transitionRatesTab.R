@@ -8,12 +8,13 @@ transitionRatesTab <- function(id) {
   tagList(
     fluidRow(
       column(12,
-          tags$div("This table contains the transition probabilities for the CF population that is treated with CFTR modulators. 
-                   The proportion of the population not treated with CFTR modulators is assumed to follow the transition probabilities 
-                   observed before CFTR modulators. The pessimistic transition probabilities are based on those estimated in Stanojevic et al., 2021 
-                   using conservative estimates of the effectiveness of CFTR modulators. The optimistic column applies the real-world effectiveness 
-                   reported in published studies. Users may apply their own custom changes in the transition rates.  For example if the rate of 
-                   transplant is reduced by 90% from the pessimistic scenario, then 0.90 can be entered into the custom column",
+          tags$div(
+              tags$p("This table contains the transition probabilities for the CF population that is treated with CFTR modulators (ETI). 
+                   The evidence-based transition probability equations for individuals on ETI were estimated using data from CCFR, 2022 to 2023. 
+                   Selecting `custom` scenario, users may apply their own custom changes in the transition rates. For example if they want to apply a reduction of 90% to the evidence-based 
+                   probability, then 0.90 can be entered into the custom column.
+                   Although, transition probability equations for individual who don't take ETI are not shown, they were estimated using data from CCFR, 2022 to 2023, as well."),
+              tags$h4("Transition probabilitiy equations for individuals on ETI")
             ),
       )
     ),
