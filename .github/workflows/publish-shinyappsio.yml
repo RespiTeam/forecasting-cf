@@ -3,7 +3,7 @@ name: shinyapps-publish
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
 
 jobs:
   deploy:
