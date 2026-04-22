@@ -277,6 +277,15 @@ ui <- auth0_ui(page_navbar(
         nav_panel("CFTR Transition Rates", transitionRatesTab("transitionTab")),
         nav_panel("More Settings", moreSettingsUI("moreSettings"))
       )
+    ),
+    nav_spacer(),
+    nav_menu(
+      title = icon("glyphicon glyphicon-user", lib="glyphicon"),
+      align = "right",
+      nav_item(
+        logoutButton(icon=icon("glyphicon glyphicon-log-out", lib="glyphicon"))
+        # logout_link
+      ),
     )
   )
 )

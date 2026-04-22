@@ -64,8 +64,8 @@ jobs:
 
       - name: Deploy to shinyapps.io
         env:
-          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT }}
-          SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
-          SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
+          SHINYAPPS_ACCOUNT: ${{ secrets.SHINYAPPS_ACCOUNT_DEV }}
+          SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN_DEV }}
+          SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET_DEV }}
           
         run: Rscript deploy.R
