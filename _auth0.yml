@@ -1,5 +1,5 @@
 name: CF-SimulationApp
-remote_url: 'https://resplab.shinyapps.io/forecasting-cf/'
+remote_url: 'https://linusgun.shinyapps.io/forecasting-cf/'
 auth0_config:
   api_url: !expr paste0('https://', Sys.getenv('AUTH0_USER'), '.auth0.com')
   credentials:
