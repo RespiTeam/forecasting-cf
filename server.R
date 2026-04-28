@@ -312,7 +312,8 @@ server <- auth0_server(function(input, output, session) {
  
     w$hide()
        
-}
-)
+},
+info = a0_info)
+
 
 

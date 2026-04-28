@@ -287,5 +287,5 @@ ui <- auth0_ui(page_navbar(
         # logout_link
       ),
     )
-  )
-)
+  ),
+info = a0_info)
