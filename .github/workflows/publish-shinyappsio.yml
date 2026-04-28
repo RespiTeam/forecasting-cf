@@ -34,9 +34,6 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASS=${{ secrets.DB_PASS }}
           DB_PORT=${{ secrets.DB_PORT }}
-
-          # ---- rsconnect (optional, if you read from Sys.getenv) ----
-          CONNECT_SERVER=${{ secrets.CONNECT_SERVER }}
           EOF
 
       - name: Setup R 4.4.3
