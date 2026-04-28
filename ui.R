@@ -288,4 +288,4 @@ ui <- auth0_ui(page_navbar(
       ),
     )
   ),
-info = a0_info)
+info = auth0::auth0_info())
